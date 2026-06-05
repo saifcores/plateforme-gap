@@ -1,0 +1,121 @@
+<div class="shell">
+  @if (opened() && isMobile()) {
+    <div class="sidebar-backdrop" (click)="closeSidebar()"></div>
+  }
+
+  <aside class="sidebar" [class.collapsed]="!opened()">
+    <div class="sidebar-brand">
+      <div class="brand-icon-wrap">
+        <mat-icon>school</mat-icon>
+      </div>
+      @if (opened()) {
+        <div class="brand-text">
+          <span class="brand-name">UCHK</span>
+          <span class="brand-tagline">Gestion admin. & pédagogique</span>
+        </div>
+      }
+    </div>
+
+    <nav class="sidebar-nav">
+      @for (item of navItems(); track item.route) {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          #rla="routerLinkActive"
+          [attr.aria-current]="rla.isActive ? 'page' : null"
+          [matTooltip]="!opened() ? item.label : ''"
+          matTooltipPosition="right"
+          (click)="onNavClick()"
+        >
+          <mat-icon>{{ item.icon }}</mat-icon>
+          @if (opened()) {
+            <span class="nav-label">{{ item.label }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    @if (opened()) {
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <span class="user-avatar">{{ initiales() }}</span>
+          <div class="user-info">
+            <span class="user-name"
+              >{{ user()?.prenom }} {{ user()?.nom }}</span
+            >
+            <span class="user-role">{{ user()?.roles?.[0] }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button
+        mat-icon-button
+        class="menu-btn"
+        (click)="toggle()"
+        aria-label="Menu"
+      >
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <nav class="breadcrumbs" aria-label="Fil d'Ariane">
+        @for (crumb of breadcrumbs(); track crumb.route; let last = $last) {
+          @if (!last) {
+            <a [routerLink]="crumb.route" class="crumb-link">{{
+              crumb.label
+            }}</a>
+            <mat-icon class="crumb-sep">chevron_right</mat-icon>
+          } @else {
+            <span class="crumb-current">{{ crumb.label }}</span>
+          }
+        }
+      </nav>
+
+      <span class="spacer"></span>
+
+      <button
+        mat-icon-button
+        routerLink="/notifications"
+        aria-label="Notifications"
+        class="icon-btn"
+        matTooltip="Notifications"
+      >
+        <mat-icon
+          [matBadge]="unread()"
+          [matBadgeHidden]="unread() === 0"
+          matBadgeColor="warn"
+          matBadgeSize="small"
+          >notifications</mat-icon
+        >
+      </button>
+
+      <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-btn">
+        <span class="avatar">{{ initiales() }}</span>
+        <span class="username">{{ user()?.prenom }}</span>
+        <mat-icon>expand_more</mat-icon>
+      </button>
+      <mat-menu #userMenu="matMenu" xPosition="before">
+        <div class="menu-header" mat-menu-item disabled>
+          <strong>{{ user()?.prenom }} {{ user()?.nom }}</strong>
+          <span class="menu-roles">{{ user()?.roles?.join(" · ") }}</span>
+        </div>
+        <button mat-menu-item routerLink="/dashboard">
+          <mat-icon>dashboard</mat-icon>
+          <span>Tableau de bord</span>
+        </button>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Déconnexion</span>
+        </button>
+      </mat-menu>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
