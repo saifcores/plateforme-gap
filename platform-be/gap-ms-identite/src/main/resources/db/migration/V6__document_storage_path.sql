@@ -1,0 +1,1 @@
+ALTER TABLE document ADD COLUMN IF NOT EXISTS chemin_stockage VARCHAR(500);
