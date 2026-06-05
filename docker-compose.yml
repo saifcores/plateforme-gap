@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gap_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gap_universite
+      POSTGRES_USER: gap
+      POSTGRES_PASSWORD: gap
+    ports:
+      - "5432:5432"
+    volumes:
+      - gap_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gap -d gap_universite"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  gap_pgdata:
