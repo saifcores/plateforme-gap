@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.uchk</groupId>
+        <artifactId>gap-parent</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>gap-config</artifactId>
+    <name>gap-config</name>
+    <description>Configuration partagee (OpenAPI, initialisation des donnees)</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.uchk</groupId>
+            <artifactId>gap-administration</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.uchk</groupId>
+            <artifactId>gap-communication</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.uchk</groupId>
+            <artifactId>gap-document</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.uchk</groupId>
+            <artifactId>gap-insertion</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.uchk</groupId>
+            <artifactId>gap-pedagogie</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.uchk</groupId>
+            <artifactId>gap-utilisateur</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+</project>
