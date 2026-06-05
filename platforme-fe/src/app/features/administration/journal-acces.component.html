@@ -1,0 +1,88 @@
+<div class="page-shell page-accent-administration gap-animate-in">
+  <header class="page-header">
+    <div>
+      <h1>
+        Journal d'accès aux documents
+        <span class="count-badge">{{ filtered().length }}</span>
+      </h1>
+      <p>Traçabilité des téléchargements (EX-T7)</p>
+    </div>
+    <div class="page-header-actions">
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="exporting() || loading()"
+        (click)="exportExcel()"
+      >
+        <mat-icon>download</mat-icon>
+        Export Excel
+      </button>
+    </div>
+  </header>
+
+  <div class="list-panel gap-animate-in gap-stagger-1">
+    <app-search-field
+      placeholder="Document, utilisateur, action…"
+      [value]="filter()"
+      [resultCount]="filter() ? filtered().length : null"
+      (search)="onSearch($event)"
+    />
+
+    <app-page-feedback [loading]="loading()" />
+
+    <div class="table-wrapper">
+      <table
+        mat-table
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="onSort($event)"
+        [dataSource]="paged()"
+        class="full-width"
+      >
+        <ng-container matColumnDef="date">
+          <th mat-header-cell mat-sort-header="date" *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let e">{{ e.accedeLe }}</td>
+        </ng-container>
+        <ng-container matColumnDef="document">
+          <th mat-header-cell mat-sort-header="document" *matHeaderCellDef>
+            Document
+          </th>
+          <td mat-cell *matCellDef="let e">{{ e.documentNom }}</td>
+        </ng-container>
+        <ng-container matColumnDef="utilisateur">
+          <th mat-header-cell mat-sort-header="utilisateur" *matHeaderCellDef>
+            Utilisateur
+          </th>
+          <td mat-cell *matCellDef="let e">
+            {{ e.utilisateurNom || e.utilisateurEmail || "—" }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="action">
+          <th mat-header-cell mat-sort-header="action" *matHeaderCellDef>
+            Action
+          </th>
+          <td mat-cell *matCellDef="let e">{{ e.action }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
+
+      @if (!loading() && filtered().length === 0) {
+        <app-empty-state
+          icon="history"
+          message="Aucun accès enregistré."
+          [compact]="true"
+        />
+      }
+    </div>
+
+    <mat-paginator
+      [length]="filtered().length"
+      [pageSize]="pageSize()"
+      [pageIndex]="pageIndex()"
+      [pageSizeOptions]="[5, 10, 25]"
+      (page)="onPage($event)"
+    />
+  </div>
+</div>

@@ -1,0 +1,41 @@
+:host {
+  display: block;
+}
+
+:host app-search-field {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.lignes {
+  margin: 12px 0 16px;
+  grid-column: 1 / -1;
+}
+
+.ligne-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--gap-text-secondary);
+}
+
+.ligne-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: var(--gap-radius-md);
+  background: var(--gap-surface);
+  border: 1px solid var(--gap-border);
+}
+
+@media (max-width: 768px) {
+  .ligne-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,170 @@
+<div class="page-shell page-accent-administration gap-animate-in">
+  <header class="page-header">
+    <div>
+      <h1>
+        Utilisateurs
+        <span class="count-badge">{{ totalElements() }}</span>
+      </h1>
+      <p>Gestion des comptes et des rôles</p>
+    </div>
+  </header>
+
+  <div class="list-panel gap-animate-in gap-stagger-1">
+    <mat-expansion-panel class="add-panel gap-form-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>add</mat-icon>&nbsp;{{
+            editId() ? "Modifier l'utilisateur" : "Créer un utilisateur"
+          }}
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <form [formGroup]="form" (ngSubmit)="save()" class="gap-inline-form">
+        <mat-form-field>
+          <mat-label>Email</mat-label>
+          <mat-icon matPrefix>mail_outline</mat-icon>
+          <input matInput type="email" formControlName="email" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Prénom</mat-label>
+          <mat-icon matPrefix>person_outline</mat-icon>
+          <input matInput formControlName="prenom" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Nom</mat-label>
+          <input matInput formControlName="nom" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Téléphone</mat-label>
+          <mat-icon matPrefix>phone</mat-icon>
+          <input matInput formControlName="telephone" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>{{
+            editId() ? "Nouveau mot de passe (optionnel)" : "Mot de passe"
+          }}</mat-label>
+          <mat-icon matPrefix>lock_outline</mat-icon>
+          <input matInput type="password" formControlName="motDePasse" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Rôles</mat-label>
+          <mat-icon matPrefix>shield</mat-icon>
+          <mat-select formControlName="roles" multiple>
+            @for (r of allRoles(); track r) {
+              <mat-option [value]="r">{{ r }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (editId()) {
+          <div class="gap-checkbox-row">
+            <mat-checkbox formControlName="actif">Compte actif</mat-checkbox>
+          </div>
+        }
+        <div class="form-actions">
+          @if (editId()) {
+            <button mat-button type="button" (click)="reset()">Annuler</button>
+          }
+          <button mat-flat-button color="primary" type="submit">
+            <mat-icon>save</mat-icon>
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    </mat-expansion-panel>
+
+    <app-search-field
+      placeholder="Nom, email, rôle…"
+      [value]="filter()"
+      [resultCount]="filter() ? totalElements() : null"
+      (search)="onSearch($event)"
+    />
+
+    <app-page-feedback [loading]="loading()" />
+
+    <div class="table-wrapper">
+      <table
+        mat-table
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="onSort($event)"
+        [dataSource]="items()"
+        class="full-width"
+      >
+        <ng-container matColumnDef="nom">
+          <th mat-header-cell mat-sort-header="nom" *matHeaderCellDef>
+            Identité
+          </th>
+          <td mat-cell *matCellDef="let u">{{ u.prenom }} {{ u.nom }}</td>
+        </ng-container>
+        <ng-container matColumnDef="email">
+          <th mat-header-cell mat-sort-header="email" *matHeaderCellDef>
+            Email
+          </th>
+          <td mat-cell *matCellDef="let u">{{ u.email }}</td>
+        </ng-container>
+        <ng-container matColumnDef="roles">
+          <th mat-header-cell *matHeaderCellDef>Rôles</th>
+          <td mat-cell *matCellDef="let u">
+            <div class="role-chips">
+              @for (r of u.roles; track r) {
+                <span class="role-chip">{{ r }}</span>
+              }
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="statut">
+          <th mat-header-cell mat-sort-header="statut" *matHeaderCellDef>
+            Statut
+          </th>
+          <td mat-cell *matCellDef="let u">
+            {{ u.actif ? "Actif" : "Inactif" }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col">Actions</th>
+          <td mat-cell *matCellDef="let u" class="actions-col">
+            <button
+              mat-icon-button
+              (click)="$event.stopPropagation(); voir(u)"
+              matTooltip="Voir le détail"
+              aria-label="Voir"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              (click)="$event.stopPropagation(); edit(u)"
+              matTooltip="Modifier"
+              aria-label="Modifier"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: columns"
+          class="clickable-row"
+          (click)="voir(row)"
+        ></tr>
+      </table>
+
+      @if (!loading() && totalElements() === 0) {
+        <app-empty-state
+          icon="manage_accounts"
+          message="Aucun utilisateur."
+          [compact]="true"
+        />
+      }
+    </div>
+
+    <mat-paginator
+      [length]="totalElements()"
+      [pageSize]="pageSize()"
+      [pageIndex]="pageIndex()"
+      [pageSizeOptions]="[5, 10, 25]"
+      (page)="onPage($event)"
+    />
+  </div>
+</div>
