@@ -1,0 +1,160 @@
+<div class="page-shell page-accent-communication gap-animate-in">
+  <header class="page-header">
+    <div>
+      <h1>
+        Communication
+        <span class="count-badge">{{ totalElements() }}</span>
+      </h1>
+      <p>Comptes rendus et annonces internes</p>
+    </div>
+    @if (canManage) {
+      <div class="page-header-actions">
+        <button
+          mat-flat-button
+          color="primary"
+          routerLink="/communication/nouveau"
+        >
+          <mat-icon>add</mat-icon>
+          Nouveau compte rendu
+        </button>
+      </div>
+    }
+  </header>
+
+  <div class="list-panel gap-animate-in gap-stagger-1">
+    <div class="gap-filters-row">
+      <app-search-field
+        class="gap-filters-search"
+        placeholder="Titre, auteur, contenu…"
+        [value]="filter()"
+        [resultCount]="filter() ? totalElements() : null"
+        (search)="onSearch($event)"
+      />
+      <mat-form-field class="gap-filter-field" subscriptSizing="dynamic">
+        <mat-icon matPrefix>category</mat-icon>
+        <mat-select
+          placeholder="Type"
+          [value]="typeFilter()"
+          (selectionChange)="onTypeFilter($event.value)"
+        >
+          <mat-option value="">Tous</mat-option>
+          @for (t of types; track t) {
+            <mat-option [value]="t">{{ t }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="gap-filter-field" subscriptSizing="dynamic">
+        <mat-icon matPrefix>person_search</mat-icon>
+        <input matInput placeholder="Auteur" (input)="onAuteurFilter($event)" />
+      </mat-form-field>
+      <mat-form-field class="gap-filter-field" subscriptSizing="dynamic">
+        <mat-icon matPrefix>event</mat-icon>
+        <input
+          matInput
+          type="date"
+          aria-label="Date début"
+          (input)="onDateFrom($event)"
+        />
+      </mat-form-field>
+      <mat-form-field class="gap-filter-field" subscriptSizing="dynamic">
+        <mat-icon matPrefix>event</mat-icon>
+        <input
+          matInput
+          type="date"
+          aria-label="Date fin"
+          (input)="onDateTo($event)"
+        />
+      </mat-form-field>
+    </div>
+
+    <app-page-feedback [loading]="loading()" />
+
+    <div class="table-wrapper">
+      <table
+        mat-table
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="onSort($event)"
+        [dataSource]="items()"
+        class="full-width"
+      >
+        <ng-container matColumnDef="titre">
+          <th mat-header-cell mat-sort-header="titre" *matHeaderCellDef>
+            Titre
+          </th>
+          <td mat-cell *matCellDef="let c">{{ c.titre }}</td>
+        </ng-container>
+        <ng-container matColumnDef="type">
+          <th mat-header-cell mat-sort-header="type" *matHeaderCellDef>Type</th>
+          <td mat-cell *matCellDef="let c">{{ c.type }}</td>
+        </ng-container>
+        <ng-container matColumnDef="date">
+          <th mat-header-cell mat-sort-header="date" *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let c">{{ c.dateEvent }}</td>
+        </ng-container>
+        <ng-container matColumnDef="auteur">
+          <th mat-header-cell mat-sort-header="auteur" *matHeaderCellDef>
+            Auteur
+          </th>
+          <td mat-cell *matCellDef="let c">{{ c.auteur || "—" }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col">Actions</th>
+          <td mat-cell *matCellDef="let c" class="actions-col">
+            <button
+              mat-icon-button
+              (click)="$event.stopPropagation(); voir(c)"
+              matTooltip="Voir le détail"
+              aria-label="Voir"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+            @if (canManage) {
+              <button
+                mat-icon-button
+                (click)="$event.stopPropagation(); modifier(c)"
+                matTooltip="Modifier"
+                aria-label="Modifier"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="$event.stopPropagation(); supprimer(c)"
+                matTooltip="Supprimer"
+                aria-label="Supprimer"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: columns"
+          class="clickable-row"
+          (click)="voir(row)"
+        ></tr>
+      </table>
+
+      @if (!loading() && items().length === 0) {
+        <app-empty-state
+          icon="article"
+          message="Aucun compte rendu."
+          [compact]="true"
+        />
+      }
+    </div>
+
+    <mat-paginator
+      [length]="totalElements()"
+      [pageSize]="pageSize()"
+      [pageIndex]="pageIndex()"
+      [pageSizeOptions]="[5, 10, 25]"
+      (page)="onPage($event)"
+    />
+  </div>
+</div>

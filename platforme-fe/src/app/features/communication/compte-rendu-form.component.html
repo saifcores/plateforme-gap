@@ -1,0 +1,135 @@
+<div class="page-shell page-accent-communication form-shell gap-animate-in">
+  <header class="page-header">
+    <div>
+      <h1>{{ titre() }}</h1>
+      <span class="page-subtitle">
+        <mat-icon>campaign</mat-icon>
+        Communication interne
+      </span>
+    </div>
+    <button mat-stroked-button routerLink="/communication">
+      <mat-icon>arrow_back</mat-icon>
+      Retour
+    </button>
+  </header>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <form class="form-page gap-form" [formGroup]="form" (ngSubmit)="submit()">
+    @if (showValidationError()) {
+      <div class="form-validation-banner">
+        <mat-icon>error_outline</mat-icon>
+        Veuillez corriger les champs obligatoires avant d'enregistrer.
+      </div>
+    }
+
+    <mat-card class="form-card">
+      <mat-card-content>
+        <h2 class="form-section-title">
+          <mat-icon>article</mat-icon>
+          Identification
+        </h2>
+        <p class="form-section-desc">Titre, type et date de l'événement.</p>
+        <div class="form-grid">
+          <mat-form-field class="col-8">
+            <mat-label>Titre</mat-label>
+            <input matInput formControlName="titre" />
+            @if (form.controls.titre.hasError("required")) {
+              <mat-error>Le titre est requis</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Type</mat-label>
+            <mat-select formControlName="type">
+              @for (t of types; track t) {
+                <mat-option [value]="t">{{ t }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Date</mat-label>
+            <input matInput [matDatepicker]="dp" formControlName="dateEvent" />
+            <mat-datepicker-toggle matSuffix [for]="dp" />
+            <mat-datepicker #dp />
+            @if (form.controls.dateEvent.hasError("required")) {
+              <mat-error>La date est requise</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <h2 class="form-section-title">
+          <mat-icon>lock</mat-icon>
+          Visibilité
+        </h2>
+        <p class="form-section-desc">
+          Laissez vide pour rendre visible à tous les rôles.
+        </p>
+        <div class="form-grid">
+          <mat-form-field class="col-12">
+            <mat-label>Rôles autorisés</mat-label>
+            <mat-select formControlName="rolesAutorises" multiple>
+              @for (r of roles; track r) {
+                <mat-option [value]="r">{{ r }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Vide = visible par tous</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <h2 class="form-section-title">
+          <mat-icon>description</mat-icon>
+          Contenu
+        </h2>
+        <p class="form-section-desc">Texte du compte rendu et pièce jointe.</p>
+        <div class="form-grid">
+          <app-document-upload
+            class="col-12"
+            label="Joindre un document"
+            module="communication"
+            [value]="form.controls.documentUrl.value"
+            (valueChange)="form.controls.documentUrl.setValue($event)"
+          />
+
+          <mat-form-field class="col-12">
+            <mat-label>Contenu</mat-label>
+            <textarea
+              matInput
+              rows="8"
+              formControlName="contenu"
+              placeholder="Rédigez le compte rendu ici..."
+            ></textarea>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="form-sticky-bar">
+      <span class="form-sticky-hint">
+        <span class="required-mark">*</span> Champs obligatoires
+      </span>
+      <div class="form-sticky-actions">
+        <button mat-stroked-button type="button" routerLink="/communication">
+          Annuler
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          class="btn-save"
+          type="submit"
+          [disabled]="saving()"
+        >
+          @if (saving()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

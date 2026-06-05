@@ -1,0 +1,66 @@
+<app-page-feedback [loading]="loading()" />
+
+@if (item(); as c) {
+  <div class="page-shell page-accent-communication detail-shell gap-animate-in">
+    <header class="page-header">
+      <div class="detail-hero">
+        <span class="detail-avatar">
+          <mat-icon>article</mat-icon>
+        </span>
+        <div>
+          <h1>{{ c.titre }}</h1>
+          <span class="detail-badge">
+            {{ c.type }} · {{ c.dateEvent }} ·
+            {{ c.auteur || "Auteur inconnu" }}
+          </span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button routerLink="/communication">
+          <mat-icon>arrow_back</mat-icon>
+          Retour
+        </button>
+        @if (canManage) {
+          <button
+            mat-flat-button
+            color="primary"
+            [routerLink]="['/communication', c.id, 'modifier']"
+          >
+            <mat-icon>edit</mat-icon>
+            Modifier
+          </button>
+        }
+      </div>
+    </header>
+
+    <mat-card class="detail-card">
+      <mat-card-content>
+        @if (c.rolesAutorises.length) {
+          <div class="chips">
+            <span class="label">Visible par</span>
+            <mat-chip-set>
+              @for (r of c.rolesAutorises; track r) {
+                <mat-chip>{{ r }}</mat-chip>
+              }
+            </mat-chip-set>
+          </div>
+        } @else {
+          <p class="hint">Visible par tous les rôles.</p>
+        }
+
+        <app-document-link [url]="c.documentUrl" />
+
+        <div class="contenu">{{ c.contenu || "Aucun contenu." }}</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+} @else if (!loading()) {
+  <div class="page-shell page-accent-communication">
+    <app-empty-state
+      icon="article"
+      [message]="error() || 'Compte rendu introuvable.'"
+      actionLabel="Retour à la liste"
+      actionLink="/communication"
+    />
+  </div>
+}

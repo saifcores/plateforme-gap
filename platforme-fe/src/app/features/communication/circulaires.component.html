@@ -1,0 +1,97 @@
+<div class="page-shell page-accent-communication gap-animate-in">
+  <header class="page-header">
+    <div>
+      <h1>
+        Circulaires
+        <span class="count-badge">{{ filtered().length }}</span>
+      </h1>
+      <p>Notes officielles et communications institutionnelles</p>
+    </div>
+  </header>
+
+  <div class="list-panel gap-animate-in gap-stagger-1">
+    <app-search-field
+      placeholder="Référence, objet…"
+      [value]="filter()"
+      [resultCount]="filter() ? filtered().length : null"
+      (search)="onSearch($event)"
+    />
+
+    <app-page-feedback [loading]="loading()" />
+
+    <div class="table-wrapper">
+      <table
+        mat-table
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="onSort($event)"
+        [dataSource]="paged()"
+        class="full-width"
+      >
+        <ng-container matColumnDef="reference">
+          <th mat-header-cell mat-sort-header="reference" *matHeaderCellDef>
+            Référence
+          </th>
+          <td mat-cell *matCellDef="let c">{{ c.reference || "—" }}</td>
+        </ng-container>
+        <ng-container matColumnDef="objet">
+          <th mat-header-cell mat-sort-header="objet" *matHeaderCellDef>
+            Objet
+          </th>
+          <td mat-cell *matCellDef="let c">{{ c.objet }}</td>
+        </ng-container>
+        <ng-container matColumnDef="date">
+          <th mat-header-cell mat-sort-header="date" *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let c">{{ c.dateCirculaire }}</td>
+        </ng-container>
+        <ng-container matColumnDef="document">
+          <th mat-header-cell *matHeaderCellDef>Document</th>
+          <td mat-cell *matCellDef="let c">
+            @if (c.documentUrl) {
+              <app-document-link [url]="c.documentUrl" />
+            } @else {
+              —
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col">Actions</th>
+          <td mat-cell *matCellDef="let c" class="actions-col">
+            <button
+              mat-icon-button
+              (click)="$event.stopPropagation(); voir(c)"
+              matTooltip="Voir le détail"
+              aria-label="Voir"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: columns"
+          class="clickable-row"
+          (click)="voir(row)"
+        ></tr>
+      </table>
+
+      @if (!loading() && filtered().length === 0) {
+        <app-empty-state
+          icon="description"
+          message="Aucune circulaire publiée."
+          [compact]="true"
+        />
+      }
+    </div>
+
+    <mat-paginator
+      [length]="filtered().length"
+      [pageSize]="pageSize()"
+      [pageIndex]="pageIndex()"
+      [pageSizeOptions]="[5, 10, 25]"
+      (page)="onPage($event)"
+    />
+  </div>
+</div>
