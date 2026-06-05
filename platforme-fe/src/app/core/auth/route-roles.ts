@@ -1,0 +1,60 @@
+import { RoleCode } from "./auth.models";
+
+export const STAFF_ETUDIANTS: RoleCode[] = [
+  "ADMIN",
+  "ADMINISTRATIF",
+  "RESPONSABLE_FORMATION",
+  "ENSEIGNANT",
+  "TUTEUR",
+  "APPUI_INSERTION",
+];
+
+export const STAFF_ETUDIANTS_MANAGE: RoleCode[] = ["ADMIN", "ADMINISTRATIF"];
+
+export const STAFF_FORMATIONS: RoleCode[] = [
+  "ADMIN",
+  "ADMINISTRATIF",
+  "RESPONSABLE_FORMATION",
+  "ENSEIGNANT",
+  "ENSEIGNANT_ASSOCIE",
+];
+
+export const STAFF_COMMUNICATION: RoleCode[] = [
+  "ADMIN",
+  "ADMINISTRATIF",
+  "RESPONSABLE_FORMATION",
+  "ENSEIGNANT",
+  "ENSEIGNANT_ASSOCIE",
+  "TUTEUR",
+  "APPUI_INSERTION",
+  "ETUDIANT",
+];
+
+export const STAFF_COMMUNICATION_MANAGE: RoleCode[] = [
+  "ADMIN",
+  "ADMINISTRATIF",
+  "RESPONSABLE_FORMATION",
+];
+
+export const STAFF_ADMINISTRATION: RoleCode[] = ["ADMIN", "ADMINISTRATIF"];
+
+export const STAFF_INSERTION: RoleCode[] = [
+  "ADMIN",
+  "ADMINISTRATIF",
+  "APPUI_INSERTION",
+];
+
+export const PORTAIL_ETUDIANT: RoleCode[] = ["ETUDIANT"];
+
+export const STAFF_UTILISATEURS: RoleCode[] = ["ADMIN"];
+
+export const LECTURE_CIRCULAIRES: RoleCode[] = [
+  "ADMIN",
+  "ADMINISTRATIF",
+  "RESPONSABLE_FORMATION",
+  "ENSEIGNANT",
+  "ENSEIGNANT_ASSOCIE",
+  "TUTEUR",
+  "APPUI_INSERTION",
+  "ETUDIANT",
+];
