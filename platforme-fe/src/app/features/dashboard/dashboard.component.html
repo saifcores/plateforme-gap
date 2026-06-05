@@ -1,0 +1,67 @@
+<div class="page-shell page-accent-dashboard">
+  <section class="hero gap-animate-in">
+    <div class="hero-pattern" aria-hidden="true"></div>
+    <div class="hero-content">
+      <span class="hero-badge">
+        <mat-icon>verified</mat-icon>
+        Espace sécurisé
+      </span>
+      <h1>{{ bienvenue() }}</h1>
+      <p>{{ sousTitre() }}</p>
+      @if (roleLabel()) {
+        <span class="hero-role">{{ roleLabel() }}</span>
+      }
+    </div>
+    <div class="hero-emblem" aria-hidden="true">
+      <mat-icon>school</mat-icon>
+      <span class="hero-year">{{ currentYear }}</span>
+    </div>
+  </section>
+
+  <app-page-feedback [loading]="kpisLoading()" [error]="kpisError()" />
+
+  <section class="quick-stats gap-animate-in gap-stagger-2">
+    @for (s of kpis(); track s.label) {
+      <div class="stat-item">
+        <span class="stat-icon"
+          ><mat-icon>{{ s.icon }}</mat-icon></span
+        >
+        <div>
+          <span class="stat-value">{{ s.value }}</span>
+          <span class="stat-label">{{ s.label }}</span>
+        </div>
+      </div>
+    }
+  </section>
+
+  <section class="modules-section gap-animate-in gap-stagger-3">
+    <header class="section-header">
+      <span class="section-eyebrow">Navigation</span>
+      <h2>Vos modules</h2>
+      <p>Accédez rapidement aux fonctionnalités de votre espace</p>
+    </header>
+
+    <div class="modules-grid">
+      @for (m of modules(); track m.route; let i = $index) {
+        <a
+          [routerLink]="m.route"
+          [class]="'module-link gap-animate-in gap-stagger-' + (i + 4)"
+        >
+          <mat-card class="module-card">
+            <div class="icon-wrap" [style.background]="m.couleur">
+              <mat-icon>{{ m.icon }}</mat-icon>
+            </div>
+            <mat-card-content>
+              <h3>{{ m.titre }}</h3>
+              <p>{{ m.description }}</p>
+              <span class="card-action">
+                Accéder
+                <mat-icon>arrow_forward</mat-icon>
+              </span>
+            </mat-card-content>
+          </mat-card>
+        </a>
+      }
+    </div>
+  </section>
+</div>
