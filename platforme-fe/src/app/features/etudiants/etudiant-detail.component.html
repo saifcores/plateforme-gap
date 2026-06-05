@@ -1,0 +1,119 @@
+<app-page-feedback [loading]="loading()" />
+
+@if (etudiant(); as e) {
+  <div class="page-shell page-accent-etudiants detail-shell gap-animate-in">
+    <header class="page-header">
+      <div class="detail-hero">
+        <span class="detail-avatar"
+          >{{ e.prenom.charAt(0) }}{{ e.nom.charAt(0) }}</span
+        >
+        <div>
+          <h1>{{ e.prenom }} {{ e.nom }}</h1>
+          <span class="detail-badge">
+            <mat-icon>badge</mat-icon>
+            INE : {{ e.ine }}
+          </span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button mat-stroked-button routerLink="/etudiants">
+          <mat-icon>arrow_back</mat-icon>
+          Retour
+        </button>
+        @if (canManage) {
+          <button
+            mat-flat-button
+            color="primary"
+            [routerLink]="['/etudiants', e.id, 'modifier']"
+          >
+            <mat-icon>edit</mat-icon>
+            Modifier
+          </button>
+        }
+      </div>
+    </header>
+
+    <div class="cards">
+      <mat-card class="detail-card">
+        <mat-card-content>
+          <h2 class="section-title">
+            <mat-icon>person</mat-icon>
+            Informations
+          </h2>
+          <dl class="info">
+            <dt>Genre</dt>
+            <dd>{{ e.genre || "—" }}</dd>
+            <dt>Date de naissance</dt>
+            <dd>{{ e.dateNaissance || "—" }}</dd>
+            <dt>Email</dt>
+            <dd>{{ e.email || "—" }}</dd>
+            <dt>Téléphone</dt>
+            <dd>{{ e.telephone || "—" }}</dd>
+            <dt>Formation</dt>
+            <dd>{{ e.formationIntitule || "—" }}</dd>
+            <dt>Promo</dt>
+            <dd>{{ e.promo || "—" }}</dd>
+            <dt>Année début</dt>
+            <dd>{{ e.anneeDebut || "—" }}</dd>
+            <dt>Année sortie</dt>
+            <dd>{{ e.anneeSortie || "—" }}</dd>
+          </dl>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="detail-card">
+        <mat-card-content>
+          <h2 class="section-title">
+            <mat-icon>workspace_premium</mat-icon>
+            Diplômes
+          </h2>
+          @if (e.diplomes.length) {
+            <mat-list>
+              @for (d of e.diplomes; track d.id) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon>school</mat-icon>
+                  <span matListItemTitle>{{ d.intitule }}</span>
+                  <span matListItemLine
+                    >{{ d.etablissement }}
+                    {{ d.annee ? "· " + d.annee : "" }}</span
+                  >
+                </mat-list-item>
+              }
+            </mat-list>
+          } @else {
+            <p class="hint">Aucun diplôme.</p>
+          }
+
+          <h2 class="section-title">
+            <mat-icon>menu_book</mat-icon>
+            Autres formations
+          </h2>
+          @if (e.autresFormations.length) {
+            <mat-list>
+              @for (a of e.autresFormations; track a.id) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon>menu_book</mat-icon>
+                  <span matListItemTitle>{{ a.intitule }}</span>
+                  <span matListItemLine
+                    >{{ a.organisme }} {{ a.annee ? "· " + a.annee : "" }}</span
+                  >
+                </mat-list-item>
+              }
+            </mat-list>
+          } @else {
+            <p class="hint">Aucune autre formation.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+} @else if (!loading()) {
+  <div class="page-shell page-accent-etudiants">
+    <app-empty-state
+      icon="person_off"
+      [message]="error() || 'Étudiant introuvable.'"
+      actionLabel="Retour à la liste"
+      actionLink="/etudiants"
+    />
+  </div>
+}

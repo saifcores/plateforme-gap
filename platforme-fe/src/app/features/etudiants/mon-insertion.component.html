@@ -1,0 +1,49 @@
+<div class="page-shell page-accent-insertion gap-animate-in">
+  <header class="page-header">
+    <div>
+      <h1>Mon insertion</h1>
+      <p>Suivi de votre parcours professionnel après la formation.</p>
+    </div>
+  </header>
+
+  <app-page-feedback [loading]="loading()" />
+
+  @if (!loading() && !error() && insertion(); as i) {
+    <mat-card class="detail-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>work</mat-icon>
+        <mat-card-title>
+          {{ i.type === "SALARIE" ? "Salarié" : "Auto-emploi" }}
+        </mat-card-title>
+        <mat-card-subtitle>{{
+          i.dateInsertion || "Date non renseignée"
+        }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list>
+          <mat-list-item>
+            <mat-icon matListItemIcon>business</mat-icon>
+            <span matListItemTitle>Entreprise</span>
+            <span matListItemLine>{{ i.entreprise || "—" }}</span>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon matListItemIcon>badge</mat-icon>
+            <span matListItemTitle>Poste</span>
+            <span matListItemLine>{{ i.poste || "—" }}</span>
+          </mat-list-item>
+          <mat-list-item>
+            <mat-icon matListItemIcon>category</mat-icon>
+            <span matListItemTitle>Secteur</span>
+            <span matListItemLine>{{ i.secteur || "—" }}</span>
+          </mat-list-item>
+        </mat-list>
+      </mat-card-content>
+    </mat-card>
+  } @else if (!loading() && error()) {
+    <app-empty-state
+      icon="work_off"
+      [message]="error()!"
+      description="Votre conseiller insertion mettra à jour votre dossier dès qu'une insertion sera enregistrée."
+    />
+  }
+</div>

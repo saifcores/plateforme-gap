@@ -1,0 +1,126 @@
+<div class="page-shell page-accent-etudiants gap-animate-in">
+  <header class="page-header">
+    <div>
+      <h1>
+        Étudiants
+        <span class="count-badge">{{ totalElements() }}</span>
+      </h1>
+      <p>Gestion des dossiers et inscriptions</p>
+    </div>
+    @if (canManage) {
+      <div class="page-header-actions">
+        <button mat-flat-button color="primary" routerLink="/etudiants/nouveau">
+          <mat-icon>add</mat-icon>
+          Nouvel étudiant
+        </button>
+      </div>
+    }
+  </header>
+
+  <div class="list-panel gap-animate-in gap-stagger-1">
+    <app-search-field
+      placeholder="Nom, INE, formation, promo…"
+      hint="Filtre en temps réel sur la liste"
+      [value]="filter()"
+      [resultCount]="filter() ? totalElements() : null"
+      (search)="onSearch($event)"
+    />
+
+    <app-page-feedback [loading]="loading()" />
+
+    <div class="table-wrapper">
+      <table
+        mat-table
+        matSort
+        [matSortActive]="sortActive()"
+        [matSortDirection]="sortDirection()"
+        (matSortChange)="onSort($event)"
+        [dataSource]="etudiants()"
+        class="full-width"
+      >
+        <ng-container matColumnDef="ine">
+          <th mat-header-cell mat-sort-header="ine" *matHeaderCellDef>INE</th>
+          <td mat-cell *matCellDef="let e">{{ e.ine }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="nom">
+          <th mat-header-cell mat-sort-header="nom" *matHeaderCellDef>
+            Nom complet
+          </th>
+          <td mat-cell *matCellDef="let e">{{ e.prenom }} {{ e.nom }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="formation">
+          <th mat-header-cell mat-sort-header="formation" *matHeaderCellDef>
+            Formation
+          </th>
+          <td mat-cell *matCellDef="let e">{{ e.formationIntitule || "—" }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="promo">
+          <th mat-header-cell mat-sort-header="promo" *matHeaderCellDef>
+            Promo
+          </th>
+          <td mat-cell *matCellDef="let e">{{ e.promo || "—" }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="actions-col">Actions</th>
+          <td mat-cell *matCellDef="let e" class="actions-col">
+            <button
+              mat-icon-button
+              (click)="$event.stopPropagation(); voir(e)"
+              matTooltip="Voir le détail"
+              aria-label="Voir"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+            @if (canManage) {
+              <button
+                mat-icon-button
+                (click)="$event.stopPropagation(); modifier(e)"
+                matTooltip="Modifier"
+                aria-label="Modifier"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="$event.stopPropagation(); supprimer(e)"
+                matTooltip="Supprimer"
+                aria-label="Supprimer"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: columns"
+          class="clickable-row"
+          (click)="voir(row)"
+        ></tr>
+      </table>
+
+      @if (!loading() && etudiants().length === 0) {
+        <app-empty-state
+          icon="person_search"
+          message="Aucun étudiant trouvé."
+          [compact]="true"
+        />
+      }
+    </div>
+
+    <mat-paginator
+      [length]="totalElements()"
+      [pageSize]="pageSize()"
+      [pageIndex]="pageIndex()"
+      [pageSizeOptions]="[5, 10, 25]"
+      (page)="onPage($event)"
+    />
+  </div>
+</div>

@@ -1,0 +1,297 @@
+<div class="page-shell page-accent-etudiants form-shell gap-animate-in">
+  <header class="page-header">
+    <div>
+      <h1>{{ titre() }}</h1>
+      <span class="page-subtitle">
+        <mat-icon>groups</mat-icon>
+        Dossier étudiant
+      </span>
+    </div>
+    <button mat-stroked-button routerLink="/etudiants">
+      <mat-icon>arrow_back</mat-icon>
+      Retour
+    </button>
+  </header>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <form class="form-page gap-form" [formGroup]="form" (ngSubmit)="submit()">
+    @if (showValidationError()) {
+      <div class="form-validation-banner">
+        <mat-icon>error_outline</mat-icon>
+        Veuillez corriger les champs obligatoires avant d'enregistrer.
+      </div>
+    }
+
+    <mat-card class="form-card">
+      <mat-card-content>
+        <h2 class="form-section-title">
+          <mat-icon>person</mat-icon>
+          Informations générales
+        </h2>
+        <p class="form-section-desc">Identité et coordonnées de l'étudiant.</p>
+        <div class="form-grid">
+          <mat-form-field class="col-4">
+            <mat-label>INE / Id étudiant</mat-label>
+            <input matInput formControlName="ine" />
+            <mat-icon matPrefix>badge</mat-icon>
+            @if (form.controls.ine.hasError("required")) {
+              <mat-error>L'INE est requis</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Prénom</mat-label>
+            <mat-icon matPrefix>person_outline</mat-icon>
+            <input matInput formControlName="prenom" />
+            @if (form.controls.prenom.hasError("required")) {
+              <mat-error>Le prénom est requis</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Nom</mat-label>
+            <mat-icon matPrefix>badge</mat-icon>
+            <input matInput formControlName="nom" />
+            @if (form.controls.nom.hasError("required")) {
+              <mat-error>Le nom est requis</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Date de naissance</mat-label>
+            <mat-icon matPrefix>cake</mat-icon>
+            <input
+              matInput
+              [matDatepicker]="dp"
+              formControlName="dateNaissance"
+            />
+            <mat-datepicker-toggle matSuffix [for]="dp" />
+            <mat-datepicker #dp />
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Genre</mat-label>
+            <mat-icon matPrefix>wc</mat-icon>
+            <mat-select formControlName="genre">
+              @for (g of genres; track g) {
+                <mat-option [value]="g">{{ g }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" />
+            <mat-icon matSuffix>mail_outline</mat-icon>
+            @if (form.controls.email.hasError("email")) {
+              <mat-error>Email invalide</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Téléphone</mat-label>
+            <input matInput formControlName="telephone" />
+            <mat-icon matSuffix>phone</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <h2 class="form-section-title">
+          <mat-icon>school</mat-icon>
+          Cursus
+        </h2>
+        <p class="form-section-desc">
+          Formation suivie et parcours académique.
+        </p>
+        <div class="form-grid">
+          <mat-form-field class="col-6">
+            <mat-label>Formation</mat-label>
+            <mat-icon matPrefix>school</mat-icon>
+            <mat-select formControlName="formationId">
+              <mat-option [value]="null">— Aucune —</mat-option>
+              @for (f of formations(); track f.id) {
+                <mat-option [value]="f.id">{{ f.intitule }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field class="col-3">
+            <mat-label>Promo</mat-label>
+            <input matInput formControlName="promo" placeholder="2024" />
+          </mat-form-field>
+
+          <mat-form-field class="col-3">
+            <mat-label>Année de début</mat-label>
+            <input matInput type="number" formControlName="anneeDebut" />
+          </mat-form-field>
+
+          <mat-form-field class="col-3">
+            <mat-label>Année de sortie</mat-label>
+            <input matInput type="number" formControlName="anneeSortie" />
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="form-card">
+      <mat-card-content>
+        <div class="section-head">
+          <div>
+            <h2 class="form-section-title">
+              <mat-icon>workspace_premium</mat-icon>
+              Diplômes
+            </h2>
+            <p class="form-section-desc">
+              Diplômes obtenus avant ou pendant le cursus.
+            </p>
+          </div>
+          <button mat-stroked-button type="button" (click)="ajouterDiplome()">
+            <mat-icon>add</mat-icon>
+            Ajouter
+          </button>
+        </div>
+
+        <div class="repeat-section" formArrayName="diplomes">
+          @for (d of diplomes.controls; track $index; let i = $index) {
+            <div class="repeat-block" [formGroupName]="i">
+              <div class="repeat-block-header">
+                <span class="repeat-index">Diplôme {{ i + 1 }}</span>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  type="button"
+                  (click)="retirerDiplome(i)"
+                  matTooltip="Retirer"
+                >
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+              <div class="form-grid">
+                <mat-form-field class="col-6">
+                  <mat-label>Intitulé</mat-label>
+                  <input matInput formControlName="intitule" />
+                </mat-form-field>
+                <mat-form-field class="col-3">
+                  <mat-label>Type</mat-label>
+                  <input matInput formControlName="type" />
+                </mat-form-field>
+                <mat-form-field class="col-3">
+                  <mat-label>Année</mat-label>
+                  <input matInput type="number" formControlName="annee" />
+                </mat-form-field>
+                <mat-form-field class="col-12">
+                  <mat-label>Établissement</mat-label>
+                  <input matInput formControlName="etablissement" />
+                </mat-form-field>
+              </div>
+            </div>
+          }
+          @if (diplomes.controls.length === 0) {
+            <div class="repeat-empty">
+              <mat-icon>workspace_premium</mat-icon>
+              <p>Aucun diplôme ajouté.</p>
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="ajouterDiplome()"
+              >
+                <mat-icon>add</mat-icon>
+                Ajouter un diplôme
+              </button>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="form-card">
+      <mat-card-content>
+        <div class="section-head">
+          <div>
+            <h2 class="form-section-title">
+              <mat-icon>menu_book</mat-icon>
+              Autres formations
+            </h2>
+            <p class="form-section-desc">
+              Formations complémentaires et certifications.
+            </p>
+          </div>
+          <button mat-stroked-button type="button" (click)="ajouterAutre()">
+            <mat-icon>add</mat-icon>
+            Ajouter
+          </button>
+        </div>
+
+        <div class="repeat-section" formArrayName="autresFormations">
+          @for (a of autresFormations.controls; track $index; let i = $index) {
+            <div class="repeat-block" [formGroupName]="i">
+              <div class="repeat-block-header">
+                <span class="repeat-index">Formation {{ i + 1 }}</span>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  type="button"
+                  (click)="retirerAutre(i)"
+                  matTooltip="Retirer"
+                >
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+              <div class="form-grid">
+                <mat-form-field class="col-6">
+                  <mat-label>Intitulé</mat-label>
+                  <input matInput formControlName="intitule" />
+                </mat-form-field>
+                <mat-form-field class="col-4">
+                  <mat-label>Organisme</mat-label>
+                  <input matInput formControlName="organisme" />
+                </mat-form-field>
+                <mat-form-field class="col-2">
+                  <mat-label>Année</mat-label>
+                  <input matInput type="number" formControlName="annee" />
+                </mat-form-field>
+              </div>
+            </div>
+          }
+          @if (autresFormations.controls.length === 0) {
+            <div class="repeat-empty">
+              <mat-icon>menu_book</mat-icon>
+              <p>Aucune autre formation ajoutée.</p>
+              <button mat-stroked-button type="button" (click)="ajouterAutre()">
+                <mat-icon>add</mat-icon>
+                Ajouter une formation
+              </button>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="form-sticky-bar">
+      <span class="form-sticky-hint">
+        <span class="required-mark">*</span> Champs obligatoires
+      </span>
+      <div class="form-sticky-actions">
+        <button mat-stroked-button type="button" routerLink="/etudiants">
+          Annuler
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          class="btn-save"
+          type="submit"
+          [disabled]="saving()"
+        >
+          @if (saving()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
