@@ -1,0 +1,149 @@
+<div class="page-shell page-accent-formations form-shell gap-animate-in">
+  <header class="page-header">
+    <div>
+      <h1>{{ titre() }}</h1>
+      <span class="page-subtitle">
+        <mat-icon>menu_book</mat-icon>
+        Programme de formation
+      </span>
+    </div>
+    <button mat-stroked-button routerLink="/formations">
+      <mat-icon>arrow_back</mat-icon>
+      Retour
+    </button>
+  </header>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <form class="form-page gap-form" [formGroup]="form" (ngSubmit)="submit()">
+    @if (showValidationError()) {
+      <div class="form-validation-banner">
+        <mat-icon>error_outline</mat-icon>
+        Veuillez corriger les champs obligatoires avant d'enregistrer.
+      </div>
+    }
+
+    <mat-card class="form-card">
+      <mat-card-content>
+        <h2 class="form-section-title">
+          <mat-icon>info</mat-icon>
+          Informations générales
+        </h2>
+        <p class="form-section-desc">
+          Intitulé, type et niveau du programme de formation.
+        </p>
+        <div class="form-grid">
+          <mat-form-field class="col-8">
+            <mat-label>Intitulé</mat-label>
+            <input matInput formControlName="intitule" />
+            @if (form.controls.intitule.hasError("required")) {
+              <mat-error>L'intitulé est requis</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Type</mat-label>
+            <mat-select formControlName="type">
+              @for (t of typesFormation; track t) {
+                <mat-option [value]="t">{{ t }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Niveau</mat-label>
+            <input
+              matInput
+              formControlName="niveau"
+              placeholder="Licence, Master..."
+            />
+          </mat-form-field>
+        </div>
+
+        <h2 class="form-section-title">
+          <mat-icon>calendar_month</mat-icon>
+          Calendrier
+        </h2>
+        <p class="form-section-desc">Dates de début et de fin du programme.</p>
+        <div class="form-grid">
+          <mat-form-field class="col-4">
+            <mat-label>Date de début</mat-label>
+            <input matInput [matDatepicker]="d1" formControlName="dateDebut" />
+            <mat-datepicker-toggle matSuffix [for]="d1" />
+            <mat-datepicker #d1 />
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Date de fin</mat-label>
+            <input matInput [matDatepicker]="d2" formControlName="dateFin" />
+            <mat-datepicker-toggle matSuffix [for]="d2" />
+            <mat-datepicker #d2 />
+          </mat-form-field>
+        </div>
+
+        <h2 class="form-section-title">
+          <mat-icon>account_balance_wallet</mat-icon>
+          Financement
+        </h2>
+        <p class="form-section-desc">Source et montant du financement.</p>
+        <div class="form-grid">
+          <mat-form-field class="col-4">
+            <mat-label>Type de financement</mat-label>
+            <mat-select formControlName="typeFinancement">
+              <mat-option [value]="null">— Aucun —</mat-option>
+              @for (t of typesFinancement; track t) {
+                <mat-option [value]="t">{{ t }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field class="col-4">
+            <mat-label>Montant</mat-label>
+            <input
+              matInput
+              type="number"
+              formControlName="montantFinancement"
+            />
+            <span matTextSuffix>FCFA</span>
+          </mat-form-field>
+
+          <mat-form-field class="col-12">
+            <mat-label>Description</mat-label>
+            <textarea
+              matInput
+              rows="4"
+              formControlName="description"
+            ></textarea>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="form-sticky-bar">
+      <span class="form-sticky-hint">
+        <span class="required-mark">*</span> Champs obligatoires
+      </span>
+      <div class="form-sticky-actions">
+        <button mat-stroked-button type="button" routerLink="/formations">
+          Annuler
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          class="btn-save"
+          type="submit"
+          [disabled]="saving()"
+        >
+          @if (saving()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
