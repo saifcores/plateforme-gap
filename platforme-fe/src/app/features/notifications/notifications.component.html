@@ -1,0 +1,58 @@
+<div class="page-shell page-accent-notifications gap-animate-in">
+  <header class="page-header">
+    <div>
+      <h1>
+        Notifications
+        <span class="count-badge">{{ notifications().length }}</span>
+      </h1>
+      <p>Alertes et messages de la plateforme</p>
+    </div>
+    <div class="page-header-actions">
+      <button
+        mat-stroked-button
+        (click)="toutLire()"
+        [disabled]="loading() || !notifications().length"
+      >
+        <mat-icon>done_all</mat-icon>
+        Tout marquer comme lu
+      </button>
+    </div>
+  </header>
+
+  <app-page-feedback [loading]="loading()" [error]="error()" />
+
+  <mat-card class="notif-card gap-animate-in gap-stagger-1">
+    <mat-card-content>
+      @if (notifications().length) {
+        <mat-list>
+          @for (n of notifications(); track n.id) {
+            <button
+              mat-list-item
+              type="button"
+              (click)="ouvrir(n)"
+              class="notif-item"
+              [class.unread]="!n.lu"
+            >
+              <mat-icon matListItemIcon>{{
+                n.lu ? "mail" : "mark_email_unread"
+              }}</mat-icon>
+              <span matListItemTitle>{{ n.titre }}</span>
+              <span matListItemLine>{{ n.message }}</span>
+              @if (n.createdAt) {
+                <span matListItemMeta class="notif-date">{{
+                  n.createdAt | date: "short"
+                }}</span>
+              }
+            </button>
+          }
+        </mat-list>
+      } @else if (!loading() && !error()) {
+        <app-empty-state
+          icon="notifications_none"
+          message="Aucune notification."
+          description="Les alertes liées à vos modules apparaîtront ici."
+        />
+      }
+    </mat-card-content>
+  </mat-card>
+</div>
