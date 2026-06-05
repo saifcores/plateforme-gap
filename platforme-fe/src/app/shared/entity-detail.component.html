@@ -1,0 +1,98 @@
+<app-page-feedback [loading]="loading()" />
+
+@if (!loading() && !error() && view(); as v) {
+  <div class="page-shell detail-shell gap-animate-in" [class]="v.accentClass">
+    <header class="page-header">
+      <div class="detail-hero">
+        <span class="detail-avatar">
+          <mat-icon>{{ v.icon }}</mat-icon>
+        </span>
+        <div>
+          <h1>{{ v.title }}</h1>
+          <span class="detail-badge">{{ v.subtitle }}</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button
+          mat-stroked-button
+          [routerLink]="v.backLink"
+          [queryParams]="backQueryParams()"
+        >
+          <mat-icon>arrow_back</mat-icon>
+          {{ v.backLabel }}
+        </button>
+        @if (v.etudiantLink; as link) {
+          <button
+            mat-flat-button
+            color="primary"
+            [routerLink]="['/etudiants', link.id]"
+          >
+            <mat-icon>person</mat-icon>
+            {{ link.label }}
+          </button>
+        }
+      </div>
+    </header>
+
+    <mat-card class="detail-card">
+      <mat-card-content>
+        <h2 class="section-title">
+          <mat-icon>info</mat-icon>
+          Informations
+        </h2>
+        <dl class="info">
+          @for (field of v.fields; track field.label) {
+            <dt>{{ field.label }}</dt>
+            <dd>{{ field.value ?? "—" }}</dd>
+          }
+        </dl>
+
+        @if (v.documentUrl) {
+          <app-document-link [url]="v.documentUrl" />
+        }
+
+        @if (v.content) {
+          <h2 class="section-title">
+            <mat-icon>article</mat-icon>
+            Contenu
+          </h2>
+          <div class="contenu">{{ v.content }}</div>
+        }
+
+        @if (v.budgetLines?.length) {
+          <h2 class="section-title">
+            <mat-icon>table_rows</mat-icon>
+            Lignes budgétaires
+          </h2>
+          <table mat-table [dataSource]="v.budgetLines!" class="full-width">
+            <ng-container matColumnDef="intitule">
+              <th mat-header-cell *matHeaderCellDef>Intitulé</th>
+              <td mat-cell *matCellDef="let l">{{ l.intitule }}</td>
+            </ng-container>
+            <ng-container matColumnDef="prevu">
+              <th mat-header-cell *matHeaderCellDef>Prévu</th>
+              <td mat-cell *matCellDef="let l">{{ l.montantPrevu ?? "—" }}</td>
+            </ng-container>
+            <ng-container matColumnDef="realise">
+              <th mat-header-cell *matHeaderCellDef>Réalisé</th>
+              <td mat-cell *matCellDef="let l">
+                {{ l.montantRealise ?? "—" }}
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="budgetColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: budgetColumns"></tr>
+          </table>
+        }
+      </mat-card-content>
+    </mat-card>
+  </div>
+} @else if (!loading()) {
+  <div class="page-shell" [class]="view()?.accentClass">
+    <app-empty-state
+      [icon]="view()?.emptyIcon || 'info'"
+      [message]="error() || view()?.emptyMessage || 'Élément introuvable.'"
+      [actionLabel]="view()?.backLabel || 'Retour'"
+      [actionLink]="view()?.backLink || '/dashboard'"
+    />
+  </div>
+}

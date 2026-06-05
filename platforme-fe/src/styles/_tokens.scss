@@ -1,0 +1,77 @@
+:root {
+  --gap-font-display: "Cormorant Garamond", "Georgia", serif;
+  --gap-font-sans: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+
+  --gap-primary-50: #edf5f0;
+  --gap-primary-100: #d4e8dc;
+  --gap-primary-200: #a8d1b8;
+  --gap-primary-500: #2d6b52;
+  --gap-primary-600: #1f5a42;
+  --gap-primary-700: #1a4d3a;
+  --gap-primary-800: #123828;
+  --gap-primary-900: #0f2419;
+
+  --gap-accent-50: #faf6eb;
+  --gap-accent-100: #f0e4c4;
+  --gap-accent-400: #d4af37;
+  --gap-accent-500: #c9a227;
+  --gap-accent-600: #a8841a;
+
+  --gap-surface: #fffdf8;
+  --gap-surface-muted: #f8f4ec;
+  --gap-surface-elevated: #ffffff;
+  --gap-background: #f3ede3;
+  --gap-background-subtle: #e8e0d4;
+
+  --gap-sidebar-bg: #0f2419;
+  --gap-sidebar-hover: rgba(201, 162, 39, 0.08);
+  --gap-sidebar-active: rgba(45, 107, 82, 0.22);
+  --gap-sidebar-text: #8fa898;
+  --gap-sidebar-text-active: #f5f0e8;
+  --gap-sidebar-border: rgba(201, 162, 39, 0.12);
+  --gap-sidebar-accent: var(--gap-accent-500);
+
+  --gap-text-primary: #1c1917;
+  --gap-text-secondary: #57534e;
+  --gap-text-muted: #a8a29e;
+
+  --gap-border: #e0d8cc;
+  --gap-border-subtle: #ede8df;
+
+  --gap-success: #2d6b52;
+  --gap-warning: #b45309;
+  --gap-error: #b91c1c;
+  --gap-info: #1e4a6e;
+
+  --gap-radius-sm: 6px;
+  --gap-radius-md: 10px;
+  --gap-radius-lg: 14px;
+  --gap-radius-xl: 20px;
+
+  --gap-shadow-xs: 0 1px 2px rgba(28, 25, 23, 0.04);
+  --gap-shadow-sm: 0 1px 3px rgba(28, 25, 23, 0.06),
+    0 1px 2px rgba(28, 25, 23, 0.04);
+  --gap-shadow-md: 0 4px 12px rgba(28, 25, 23, 0.08),
+    0 2px 4px rgba(28, 25, 23, 0.04);
+  --gap-shadow-lg: 0 12px 24px rgba(28, 25, 23, 0.1),
+    0 4px 8px rgba(28, 25, 23, 0.04);
+  --gap-shadow-xl: 0 20px 40px rgba(28, 25, 23, 0.12),
+    0 8px 16px rgba(28, 25, 23, 0.06);
+
+  --gap-transition: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  --gap-transition-slow: 480ms cubic-bezier(0.22, 1, 0.36, 1);
+  --gap-sidebar-width: 272px;
+  --gap-topbar-height: 60px;
+
+  --gap-pattern-opacity: 0.04;
+
+  --gap-input-bg: var(--gap-surface);
+  --gap-input-bg-hover: var(--gap-surface-muted);
+  --gap-input-border: var(--gap-border);
+  --gap-input-border-hover: var(--gap-primary-200);
+  --gap-input-border-focus: var(--gap-primary-600);
+  --gap-input-focus-ring: rgba(45, 107, 82, 0.14);
+  --gap-input-radius: var(--gap-radius-md);
+  --gap-input-height: 52px;
+  --gap-input-label-size: 0.875rem;
+}
