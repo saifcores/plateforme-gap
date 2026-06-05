@@ -1,0 +1,101 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: gap_universite
+      POSTGRES_USER: gap
+      POSTGRES_PASSWORD: gap
+    ports:
+      - "5432:5432"
+    volumes:
+      - gap_pg_data:/var/lib/postgresql/data
+
+  gap-ms-identite:
+    build:
+      context: .
+      dockerfile: Dockerfile.ms
+      args:
+        MODULE: gap-ms-identite
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/gap_universite
+      DB_USER: gap
+      DB_PASSWORD: gap
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+
+  gap-ms-pedagogie:
+    build:
+      context: .
+      dockerfile: Dockerfile.ms
+      args:
+        MODULE: gap-ms-pedagogie
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/gap_universite
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+      - gap-ms-identite
+
+  gap-ms-administration:
+    build:
+      context: .
+      dockerfile: Dockerfile.ms
+      args:
+        MODULE: gap-ms-administration
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/gap_universite
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres
+
+  gap-ms-insertion:
+    build:
+      context: .
+      dockerfile: Dockerfile.ms
+      args:
+        MODULE: gap-ms-insertion
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/gap_universite
+    ports:
+      - "8084:8084"
+    depends_on:
+      - postgres
+
+  gap-ms-document:
+    build:
+      context: .
+      dockerfile: Dockerfile.ms
+      args:
+        MODULE: gap-ms-document
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/gap_universite
+      UPLOAD_DIR: /data/uploads
+    ports:
+      - "8085:8085"
+    volumes:
+      - gap_uploads:/data/uploads
+    depends_on:
+      - postgres
+
+  gap-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.ms
+      args:
+        MODULE: gap-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - gap-ms-identite
+      - gap-ms-pedagogie
+      - gap-ms-administration
+      - gap-ms-insertion
+      - gap-ms-document
+
+volumes:
+  gap_pg_data:
+  gap_uploads:
