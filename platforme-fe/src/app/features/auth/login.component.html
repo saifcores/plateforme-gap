@@ -1,0 +1,128 @@
+<div class="login-page">
+  <section class="login-brand">
+    <div class="brand-pattern" aria-hidden="true"></div>
+    <div class="brand-glow" aria-hidden="true"></div>
+
+    <div class="brand-content gap-animate-in">
+      <div class="brand-emblem">
+        <mat-icon>school</mat-icon>
+        <span class="emblem-ring"></span>
+      </div>
+
+      <p class="brand-est">Université Cheikh Hamidou Kane</p>
+      <h1>UCHK</h1>
+      <p class="brand-tagline">Gestion administrative & pédagogique</p>
+
+      <p class="brand-description">
+        Centralisez vos opérations universitaires, suivez vos données en temps
+        réel et collaborez au sein d'un espace institutionnel sécurisé.
+      </p>
+
+      <div class="brand-features">
+        <div class="feature gap-animate-in gap-stagger-2">
+          <span class="feature-icon"><mat-icon>groups</mat-icon></span>
+          <span>Gestion des étudiants</span>
+        </div>
+        <div class="feature gap-animate-in gap-stagger-3">
+          <span class="feature-icon"><mat-icon>menu_book</mat-icon></span>
+          <span>Formations & cours</span>
+        </div>
+        <div class="feature gap-animate-in gap-stagger-4">
+          <span class="feature-icon"><mat-icon>work</mat-icon></span>
+          <span>Appui à l'insertion</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="login-form-section">
+    <div class="form-wrapper gap-animate-in gap-stagger-1">
+      <div class="mobile-brand">
+        <mat-icon>school</mat-icon>
+        <span>UCHK</span>
+      </div>
+
+      <mat-card class="login-card">
+        @if (loading()) {
+          <mat-progress-bar mode="indeterminate" />
+        }
+
+        <mat-card-content>
+          <header class="form-header">
+            <span class="form-eyebrow">Espace personnel</span>
+            <h2>Connexion</h2>
+            <p>Identifiez-vous pour accéder à la plateforme</p>
+          </header>
+
+          @if (error()) {
+            <div class="form-validation-banner">
+              <mat-icon>error_outline</mat-icon>
+              {{ error() }}
+            </div>
+          }
+
+          <form class="gap-auth-form" [formGroup]="form" (ngSubmit)="submit()">
+            <mat-form-field class="full-width">
+              <mat-label>Adresse email</mat-label>
+              <mat-icon matPrefix>mail_outline</mat-icon>
+              <input
+                matInput
+                type="email"
+                formControlName="email"
+                autocomplete="username"
+              />
+              @if (form.controls.email.hasError("required")) {
+                <mat-error>L'email est requis</mat-error>
+              }
+              @if (form.controls.email.hasError("email")) {
+                <mat-error>Email invalide</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field class="full-width">
+              <mat-label>Mot de passe</mat-label>
+              <mat-icon matPrefix>lock_outline</mat-icon>
+              <input
+                matInput
+                [type]="hidePassword() ? 'password' : 'text'"
+                formControlName="motDePasse"
+                autocomplete="current-password"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                (click)="hidePassword.set(!hidePassword())"
+                [attr.aria-label]="'Afficher le mot de passe'"
+              >
+                <mat-icon>{{
+                  hidePassword() ? "visibility_off" : "visibility"
+                }}</mat-icon>
+              </button>
+              @if (form.controls.motDePasse.hasError("required")) {
+                <mat-error>Le mot de passe est requis</mat-error>
+              }
+            </mat-form-field>
+
+            <button
+              mat-flat-button
+              color="primary"
+              class="full-width submit-btn btn-save"
+              type="submit"
+              [disabled]="loading()"
+            >
+              @if (loading()) {
+                <mat-spinner diameter="20" />
+              }
+              Se connecter
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+      <p class="login-footer">
+        © {{ currentYear }} UCHK — Tous droits réservés
+      </p>
+    </div>
+  </section>
+</div>
