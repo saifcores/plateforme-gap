@@ -69,6 +69,7 @@ public class CompteRenduService {
         return PageResponse.slice(visible, page, size, sort);
     }
 
+    @Transactional(readOnly = true)
     public CompteRenduDto findById(Long id, String email) {
         CompteRendu cr = getOrThrow(id);
         if (!isVisible(cr.getRolesAutorises(), userRoleCodes(email))) {
@@ -108,11 +109,8 @@ public class CompteRenduService {
     }
 
     private CompteRendu getOrThrow(Long id) {
-        CompteRendu cr = repository.findById(id)
+        CompteRendu cr = repository.findDetailById(id)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Compte rendu introuvable"));
-        if (cr.isDeleted()) {
-            throw new BusinessException(HttpStatus.NOT_FOUND, "Compte rendu introuvable");
-        }
         return cr;
     }
 

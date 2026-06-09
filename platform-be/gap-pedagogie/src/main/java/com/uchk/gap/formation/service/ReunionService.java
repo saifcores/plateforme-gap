@@ -28,6 +28,7 @@ public class ReunionService {
         this.formationService = formationService;
     }
 
+    @Transactional(readOnly = true)
     public List<ReunionDto> findByFormation(Long formationId) {
         formationService.getOrThrow(formationId);
         return repository.findByFormationIdOrderByDateReunionDesc(formationId).stream()

@@ -31,6 +31,7 @@ public class FormationFormateurService {
         this.etudiantRepository = etudiantRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<FormationFormateurDto> findByFormation(Long formationId) {
         formationService.getOrThrow(formationId);
         return repository.findByFormationId(formationId).stream()
@@ -65,6 +66,7 @@ public class FormationFormateurService {
                 formationId, formateurId));
     }
 
+    @Transactional(readOnly = true)
     public List<StatGenreDto> statsGenre(Long formationId) {
         formationService.getOrThrow(formationId);
         return etudiantRepository.countByFormationGroupByGenre(formationId).stream()

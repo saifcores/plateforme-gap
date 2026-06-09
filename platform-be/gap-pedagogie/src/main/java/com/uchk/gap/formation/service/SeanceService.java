@@ -26,6 +26,7 @@ public class SeanceService {
         this.formateurService = formateurService;
     }
 
+    @Transactional(readOnly = true)
     public List<SeanceDto> findByFormation(Long formationId) {
         formationService.getOrThrow(formationId);
         return repository.findByFormationIdOrderByDateSeanceAscHeureDebutAsc(formationId).stream()

@@ -31,10 +31,10 @@ public interface EtudiantRepository extends JpaRepository<Etudiant, Long> {
 
     boolean existsByIne(String ine);
 
-    @EntityGraph(attributePaths = { "diplomes", "autresFormations", "formation" })
+    @EntityGraph(attributePaths = { "diplomes", "formation" })
     Optional<Etudiant> findWithDetailsById(Long id);
 
-    @EntityGraph(attributePaths = { "diplomes", "autresFormations", "formation" })
+    @EntityGraph(attributePaths = { "diplomes", "formation" })
     Optional<Etudiant> findByUtilisateurEmailAndDeletedFalse(String email);
 
     @Query("""

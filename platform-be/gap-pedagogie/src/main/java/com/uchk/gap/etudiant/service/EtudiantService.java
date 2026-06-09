@@ -56,6 +56,7 @@ public class EtudiantService {
         Etudiant etudiant = repository.findByUtilisateurEmailAndDeletedFalse(email)
                 .orElseThrow(() -> new BusinessException(
                         HttpStatus.NOT_FOUND, "Aucun dossier etudiant lie a ce compte"));
+        etudiant.getAutresFormations().size();
         return EtudiantDto.detail(etudiant);
     }
 
@@ -104,6 +105,8 @@ public class EtudiantService {
         if (etudiant.isDeleted()) {
             throw new BusinessException(HttpStatus.NOT_FOUND, "Etudiant introuvable");
         }
+        // autresFormations is lazy-loaded (cannot fetch two List bags in one query)
+        etudiant.getAutresFormations().size();
         return etudiant;
     }
 
