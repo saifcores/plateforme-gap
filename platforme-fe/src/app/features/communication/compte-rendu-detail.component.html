@@ -1,4 +1,4 @@
-<app-page-feedback [loading]="loading()" />
+<app-page-feedback [loading]="loading()" [error]="error()" />
 
 @if (item(); as c) {
   <div class="page-shell page-accent-communication detail-shell gap-animate-in">
@@ -35,11 +35,11 @@
 
     <mat-card class="detail-card">
       <mat-card-content>
-        @if (c.rolesAutorises.length) {
+        @if ((c.rolesAutorises ?? []).length) {
           <div class="chips">
             <span class="label">Visible par</span>
             <mat-chip-set>
-              @for (r of c.rolesAutorises; track r) {
+              @for (r of c.rolesAutorises ?? []; track r) {
                 <mat-chip>{{ r }}</mat-chip>
               }
             </mat-chip-set>

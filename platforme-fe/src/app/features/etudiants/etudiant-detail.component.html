@@ -1,4 +1,4 @@
-<app-page-feedback [loading]="loading()" />
+<app-page-feedback [loading]="loading()" [error]="error()" />
 
 @if (etudiant(); as e) {
   <div class="page-shell page-accent-etudiants detail-shell gap-animate-in">
@@ -67,9 +67,9 @@
             <mat-icon>workspace_premium</mat-icon>
             Diplômes
           </h2>
-          @if (e.diplomes.length) {
+          @if ((e.diplomes ?? []).length) {
             <mat-list>
-              @for (d of e.diplomes; track d.id) {
+              @for (d of e.diplomes ?? []; track d.id ?? d.intitule) {
                 <mat-list-item>
                   <mat-icon matListItemIcon>school</mat-icon>
                   <span matListItemTitle>{{ d.intitule }}</span>
@@ -88,9 +88,9 @@
             <mat-icon>menu_book</mat-icon>
             Autres formations
           </h2>
-          @if (e.autresFormations.length) {
+          @if ((e.autresFormations ?? []).length) {
             <mat-list>
-              @for (a of e.autresFormations; track a.id) {
+              @for (a of e.autresFormations ?? []; track a.id ?? a.intitule) {
                 <mat-list-item>
                   <mat-icon matListItemIcon>menu_book</mat-icon>
                   <span matListItemTitle>{{ a.intitule }}</span>
