@@ -19,8 +19,14 @@ public record BudgetDto(
                 List<LigneDto> lignes) {
 
         public static BudgetDto summary(Budget b) {
+                BigDecimal totalPrevu = b.getLignes().stream()
+                                .map(l -> l.getMontantPrevu() == null ? BigDecimal.ZERO : l.getMontantPrevu())
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal totalRealise = b.getLignes().stream()
+                                .map(l -> l.getMontantRealise() == null ? BigDecimal.ZERO : l.getMontantRealise())
+                                .reduce(BigDecimal.ZERO, BigDecimal::add);
                 return new BudgetDto(b.getId(), b.getAnnee(), b.getType(), b.getNoteOrientation(),
-                                b.getDocumentUrl(), null, null, List.of());
+                                b.getDocumentUrl(), totalPrevu, totalRealise, List.of());
         }
 
         public static BudgetDto detail(Budget b) {

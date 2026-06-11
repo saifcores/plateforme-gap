@@ -1,11 +1,18 @@
 package com.uchk.gap.config;
 
+import com.uchk.gap.administration.entity.Budget;
 import com.uchk.gap.administration.entity.Circulaire;
 import com.uchk.gap.administration.entity.Courrier;
+import com.uchk.gap.administration.entity.LigneBudget;
 import com.uchk.gap.administration.entity.NoteAdministrative;
+import com.uchk.gap.administration.entity.NoteService;
+import com.uchk.gap.administration.entity.Personnel;
+import com.uchk.gap.administration.repository.BudgetRepository;
 import com.uchk.gap.administration.repository.CirculaireRepository;
 import com.uchk.gap.administration.repository.CourrierRepository;
 import com.uchk.gap.administration.repository.NoteAdministrativeRepository;
+import com.uchk.gap.administration.repository.NoteServiceRepository;
+import com.uchk.gap.administration.repository.PersonnelRepository;
 import com.uchk.gap.communication.entity.CompteRendu;
 import com.uchk.gap.communication.repository.CompteRenduRepository;
 import com.uchk.gap.etudiant.entity.Etudiant;
@@ -70,25 +77,33 @@ public class DemoDataInitializer {
                         NoteAdministrativeRepository noteAdministrativeRepository,
                         UtilisateurRepository utilisateurRepository,
                         RoleRepository roleRepository,
+                        BudgetRepository budgetRepository,
+                        PersonnelRepository personnelRepository,
+                        NoteServiceRepository noteServiceRepository,
                         PasswordEncoder passwordEncoder) {
-                return args -> seedIfEmpty(
-                                formationRepository,
-                                formateurRepository,
-                                seanceRepository,
-                                reunionRepository,
-                                formationFormateurRepository,
-                                noteAdministrativeRepository,
-                                etudiantRepository,
-                                partenaireRepository,
-                                stageRepository,
-                                registreContactRepository,
-                                insertionRepository,
-                                courrierRepository,
-                                circulaireRepository,
-                                compteRenduRepository,
-                                utilisateurRepository,
-                                roleRepository,
-                                passwordEncoder);
+                return args -> {
+                        seedIfEmpty(
+                                        formationRepository,
+                                        formateurRepository,
+                                        seanceRepository,
+                                        reunionRepository,
+                                        formationFormateurRepository,
+                                        noteAdministrativeRepository,
+                                        etudiantRepository,
+                                        partenaireRepository,
+                                        stageRepository,
+                                        registreContactRepository,
+                                        insertionRepository,
+                                        courrierRepository,
+                                        circulaireRepository,
+                                        compteRenduRepository,
+                                        utilisateurRepository,
+                                        roleRepository,
+                                        passwordEncoder);
+                        seedBudgetIfEmpty(budgetRepository);
+                        seedPersonnelIfEmpty(personnelRepository);
+                        seedNoteServiceIfEmpty(noteServiceRepository);
+                };
         }
 
         @Transactional
@@ -291,6 +306,95 @@ public class DemoDataInitializer {
 
                 log.info("Donnees de demo chargees (formations, etudiants, insertion, admin)");
                 log.info("Comptes demo : *@uchk.sn / {} (admin : admin@uchk.sn / admin123)", DEMO_PASSWORD);
+        }
+
+        @Transactional
+        void seedBudgetIfEmpty(BudgetRepository budgetRepository) {
+                if (budgetRepository.count() > 0) {
+                        return;
+                }
+
+                Budget budget = new Budget();
+                budget.setAnnee(2026);
+                budget.setType("PROJET");
+                budget.setNoteOrientation(
+                                "Budget projet pédagogique UCHK — exercice 2026");
+
+                LigneBudget formateurs = new LigneBudget();
+                formateurs.setIntitule("Rémunération formateurs vacataires");
+                formateurs.setMontantPrevu(new BigDecimal("8500000"));
+                formateurs.setMontantRealise(new BigDecimal("2100000"));
+                budget.addLigne(formateurs);
+
+                LigneBudget fournitures = new LigneBudget();
+                fournitures.setIntitule("Fournitures et consommables");
+                fournitures.setMontantPrevu(new BigDecimal("1200000"));
+                fournitures.setMontantRealise(new BigDecimal("450000"));
+                budget.addLigne(fournitures);
+
+                LigneBudget missions = new LigneBudget();
+                missions.setIntitule("Missions et déplacements");
+                missions.setMontantPrevu(new BigDecimal("800000"));
+                missions.setMontantRealise(new BigDecimal("125000"));
+                budget.addLigne(missions);
+
+                budgetRepository.save(budget);
+                log.info("Budget demo charge (annee 2026, type PROJET, 3 lignes)");
+        }
+
+        @Transactional
+        void seedPersonnelIfEmpty(PersonnelRepository personnelRepository) {
+                if (personnelRepository.count() > 0) {
+                        return;
+                }
+
+                Personnel admin = new Personnel();
+                admin.setPrenom("Mariama");
+                admin.setNom("Sow");
+                admin.setType("ADMINISTRATIF");
+                admin.setMatricule("ADM-001");
+                admin.setFonction("Responsable administrative");
+                admin.setEmail("administratif@uchk.sn");
+                admin.setDateEmbauche(LocalDate.of(2019, 9, 1));
+                personnelRepository.save(admin);
+
+                Personnel enseignant = new Personnel();
+                enseignant.setPrenom("Amadou");
+                enseignant.setNom("Diop");
+                enseignant.setType("ENSEIGNANT");
+                enseignant.setMatricule("ENS-014");
+                enseignant.setFonction("Maître de conférences");
+                enseignant.setEmail("a.diop@uchk.sn");
+                enseignant.setDateEmbauche(LocalDate.of(2015, 10, 15));
+                personnelRepository.save(enseignant);
+
+                log.info("Personnel demo charge (2 membres)");
+        }
+
+        @Transactional
+        void seedNoteServiceIfEmpty(NoteServiceRepository noteServiceRepository) {
+                if (noteServiceRepository.count() > 0) {
+                        return;
+                }
+
+                NoteService interne = new NoteService();
+                interne.setType("INTERNE");
+                interne.setReference("NS-2026-003");
+                interne.setObjet("Organisation des jurys de soutenance");
+                interne.setContenu(
+                                "Les présidents de jury sont désignés par la direction pédagogique.");
+                interne.setDateNote(LocalDate.of(2026, 3, 1));
+                noteServiceRepository.save(interne);
+
+                NoteService externe = new NoteService();
+                externe.setType("EXTERNE");
+                externe.setReference("NS-2026-004");
+                externe.setObjet("Convocation commission partenariats");
+                externe.setContenu("Réunion ouverte aux responsables de filière et partenaires.");
+                externe.setDateNote(LocalDate.of(2026, 2, 18));
+                noteServiceRepository.save(externe);
+
+                log.info("Notes de service demo chargees (2 notes)");
         }
 
         private void seedDemoUsers(

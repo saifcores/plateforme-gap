@@ -9,6 +9,7 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.uchk.gap.administration.dto.BudgetDto;
+import com.uchk.gap.common.BusinessException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -55,7 +57,7 @@ public class BudgetExportService {
             document.close();
             return out.toByteArray();
         } catch (DocumentException | IOException e) {
-            throw new IllegalStateException("Export PDF budget impossible", e);
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "Export PDF budget impossible");
         }
     }
 
@@ -94,7 +96,7 @@ public class BudgetExportService {
             workbook.write(out);
             return out.toByteArray();
         } catch (IOException e) {
-            throw new IllegalStateException("Export Excel budget impossible", e);
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "Export Excel budget impossible");
         }
     }
 

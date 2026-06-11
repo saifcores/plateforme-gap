@@ -19,6 +19,7 @@ public class BudgetService {
         this.repository = repository;
     }
 
+    @Transactional(readOnly = true)
     public List<BudgetDto> findAll() {
         return repository.findByOrderByAnneeDescTypeAsc().stream().map(BudgetDto::summary).toList();
     }
