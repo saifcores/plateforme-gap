@@ -6,6 +6,7 @@ import {
   OnInit,
   signal,
 } from "@angular/core";
+import { HttpErrorResponse } from "@angular/common/http";
 import { RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import { BreakpointObserver } from "@angular/cdk/layout";
 import { MatSidenavModule } from "@angular/material/sidenav";
@@ -62,7 +63,11 @@ export class ShellComponent implements OnInit, OnDestroy {
     this.notifications.refreshUnread();
     if (this.auth.token) {
       this.auth.refreshMe().subscribe({
-        error: () => this.auth.logout(),
+        error: (err) => {
+          if (err instanceof HttpErrorResponse && err.status === 401) {
+            this.auth.logout();
+          }
+        },
       });
     }
   }

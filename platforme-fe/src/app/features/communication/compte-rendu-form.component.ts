@@ -14,6 +14,12 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatSnackBar } from "@angular/material/snack-bar";
 
 import { DocumentUploadComponent } from "../../shared/document-upload.component";
+import { formatLocalDate } from "../../shared/date.utils";
+import {
+  extractApiErrorMessage,
+  extractHttpErrorMessage,
+} from "../../core/http/http-error.utils";
+import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { CommunicationService } from "./communication.service";
 import { ROLES, TYPES_COMPTE_RENDU } from "./communication.models";
 import { RoleCode } from "../../core/auth/auth.models";
@@ -22,6 +28,7 @@ import { RoleCode } from "../../core/auth/auth.models";
   selector: "app-compte-rendu-form",
   standalone: true,
   imports: [
+    PageFeedbackComponent,
     RouterLink,
     ReactiveFormsModule,
     MatCardModule,
@@ -50,6 +57,7 @@ export class CompteRenduFormComponent {
   readonly roles = ROLES;
   readonly saving = signal(false);
   readonly loading = signal(false);
+  readonly loadError = signal<string | null>(null);
   readonly showValidationError = signal(false);
   readonly editId = signal<number | null>(null);
   readonly titre = computed(() =>
@@ -75,6 +83,7 @@ export class CompteRenduFormComponent {
 
   private load(id: number): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.get(id).subscribe({
       next: (c) => {
         this.form.patchValue({
@@ -87,9 +96,15 @@ export class CompteRenduFormComponent {
         });
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
+        this.loadError.set(
+          extractHttpErrorMessage(err, {
+            notFound: "Compte rendu introuvable ou accès refusé.",
+            forbidden: "Vous n'avez pas accès à ce compte rendu.",
+            default: "Impossible de charger le compte rendu.",
+          }),
+        );
         this.loading.set(false);
-        this.snack.open("Compte rendu introuvable", "OK", { duration: 4000 });
       },
     });
   }
@@ -106,7 +121,7 @@ export class CompteRenduFormComponent {
     const payload = {
       titre: raw.titre!,
       type: raw.type!,
-      dateEvent: new Date(raw.dateEvent!).toISOString().substring(0, 10),
+      dateEvent: formatLocalDate(raw.dateEvent!)!,
       contenu: raw.contenu || null,
       documentUrl: raw.documentUrl || null,
       rolesAutorises: raw.rolesAutorises ?? [],
@@ -124,7 +139,7 @@ export class CompteRenduFormComponent {
       error: (err) => {
         this.saving.set(false);
         this.snack.open(
-          err?.error?.message ?? "Échec de l'enregistrement",
+          extractApiErrorMessage(err, "Échec de l'enregistrement"),
           "OK",
           {
             duration: 4000,

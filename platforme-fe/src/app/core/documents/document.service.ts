@@ -2,6 +2,7 @@ import { Injectable, inject } from "@angular/core";
 import { HttpClient, HttpResponse } from "@angular/common/http";
 import { Observable, map } from "rxjs";
 
+import { triggerFileDownload } from "../http/http-error.utils";
 import { environment } from "../../../environments/environment";
 
 export interface StoredDocument {
@@ -37,24 +38,19 @@ export class DocumentService {
     return `${origin}${url}`;
   }
 
-  download(url: string, filename?: string): void {
+  download(url: string, filename?: string): Observable<void> {
     const fullUrl = this.resolveUrl(url);
-    this.http
+    return this.http
       .get(fullUrl, { responseType: "blob", observe: "response" })
-      .subscribe({
-        next: (response: HttpResponse<Blob>) => {
+      .pipe(
+        map((response: HttpResponse<Blob>) => {
           const blob = response.body;
           if (!blob) {
-            return;
+            throw new Error("Réponse vide");
           }
-          const objectUrl = URL.createObjectURL(blob);
-          const anchor = document.createElement("a");
-          anchor.href = objectUrl;
-          anchor.download = filename ?? "document";
-          anchor.click();
-          URL.revokeObjectURL(objectUrl);
-        },
-      });
+          triggerFileDownload(blob, filename ?? this.extractFilename(url));
+        }),
+      );
   }
 
   extractFilename(url: string): string {

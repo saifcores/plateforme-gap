@@ -13,9 +13,7 @@
     </button>
   </header>
 
-  @if (loading()) {
-    <mat-progress-bar mode="indeterminate" />
-  }
+  <app-page-feedback [loading]="loading()" [error]="loadError()" />
 
   <form class="form-page gap-form" [formGroup]="form" (ngSubmit)="submit()">
     @if (showValidationError()) {

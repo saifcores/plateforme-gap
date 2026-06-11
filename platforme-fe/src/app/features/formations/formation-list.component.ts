@@ -17,6 +17,11 @@ import { ConfirmDialogService } from "../../shared/confirm-dialog.service";
 import { EmptyStateComponent } from "../../shared/empty-state.component";
 import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { SearchFieldComponent } from "../../shared/search-field.component";
+import {
+  extractApiErrorMessage,
+  finishListLoad,
+  showApiErrorSnack,
+} from "../../core/http/http-error.utils";
 
 const SORT_FIELDS: Record<string, string> = {
   intitule: "intitule",
@@ -53,6 +58,7 @@ export class FormationListComponent {
 
   readonly columns = ["intitule", "type", "niveau", "periode", "actions"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly formations = signal<Formation[]>([]);
   readonly filter = signal("");
   readonly pageIndex = signal(0);
@@ -73,6 +79,7 @@ export class FormationListComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service
       .search({
         page: this.pageIndex(),
@@ -91,12 +98,13 @@ export class FormationListComponent {
           this.totalElements.set(page.totalElements);
           this.loading.set(false);
         },
-        error: () => {
-          this.loading.set(false);
-          this.snack.open("Erreur de chargement des formations", "OK", {
-            duration: 4000,
-          });
-        },
+        error: (err) =>
+          finishListLoad(
+            err,
+            this.loading,
+            this.loadError,
+            "Impossible de charger les formations.",
+          ),
       });
   }
 
@@ -142,10 +150,8 @@ export class FormationListComponent {
             this.snack.open("Formation supprimée", "OK", { duration: 3000 });
             this.load();
           },
-          error: () =>
-            this.snack.open("Suppression impossible", "OK", {
-              duration: 4000,
-            }),
+          error: (err) =>
+            showApiErrorSnack(this.snack, err, "Suppression impossible"),
         });
       });
   }

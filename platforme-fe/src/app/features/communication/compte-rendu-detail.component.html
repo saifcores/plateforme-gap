@@ -9,10 +9,7 @@
         </span>
         <div>
           <h1>{{ c.titre }}</h1>
-          <span class="detail-badge">
-            {{ c.type }} · {{ c.dateEvent }} ·
-            {{ c.auteur || "Auteur inconnu" }}
-          </span>
+          <span class="detail-badge type-badge">{{ typeLabel(c.type) }}</span>
         </div>
       </div>
       <div class="header-actions">
@@ -33,26 +30,59 @@
       </div>
     </header>
 
-    <mat-card class="detail-card">
-      <mat-card-content>
-        @if ((c.rolesAutorises ?? []).length) {
-          <div class="chips">
-            <span class="label">Visible par</span>
-            <mat-chip-set>
-              @for (r of c.rolesAutorises ?? []; track r) {
-                <mat-chip>{{ r }}</mat-chip>
+    <div class="cards">
+      <mat-card class="detail-card meta-card">
+        <mat-card-content>
+          <h2 class="section-title">
+            <mat-icon>info</mat-icon>
+            Informations
+          </h2>
+          <dl class="info">
+            <dt>Date de l'événement</dt>
+            <dd>{{ c.dateEvent | date: "d MMMM y" }}</dd>
+            <dt>Auteur</dt>
+            <dd>{{ c.auteur || "Non renseigné" }}</dd>
+            <dt>Visibilité</dt>
+            <dd>
+              @if (c.rolesAutorises?.length) {
+                <mat-chip-set class="role-chips">
+                  @for (r of c.rolesAutorises; track r) {
+                    <mat-chip>{{ roleLabel(r) }}</mat-chip>
+                  }
+                </mat-chip-set>
+              } @else {
+                <span class="visibility-all">Tous les rôles</span>
               }
-            </mat-chip-set>
-          </div>
-        } @else {
-          <p class="hint">Visible par tous les rôles.</p>
-        }
+            </dd>
+          </dl>
 
-        <app-document-link [url]="c.documentUrl" />
+          @if (c.documentUrl) {
+            <h2 class="section-title">
+              <mat-icon>attach_file</mat-icon>
+              Document joint
+            </h2>
+            <app-document-link
+              [url]="c.documentUrl"
+              label="Télécharger le document"
+            />
+          }
+        </mat-card-content>
+      </mat-card>
 
-        <div class="contenu">{{ c.contenu || "Aucun contenu." }}</div>
-      </mat-card-content>
-    </mat-card>
+      <mat-card class="detail-card content-card">
+        <mat-card-content>
+          <h2 class="section-title">
+            <mat-icon>description</mat-icon>
+            Compte rendu
+          </h2>
+          @if (c.contenu) {
+            <div class="contenu">{{ c.contenu }}</div>
+          } @else {
+            <p class="hint">Aucun contenu rédigé pour ce compte rendu.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
   </div>
 } @else if (!loading()) {
   <div class="page-shell page-accent-communication">

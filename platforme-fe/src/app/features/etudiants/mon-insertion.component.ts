@@ -3,6 +3,7 @@ import { MatCardModule } from "@angular/material/card";
 import { MatIconModule } from "@angular/material/icon";
 import { MatListModule } from "@angular/material/list";
 
+import { extractHttpErrorMessage } from "../../core/http/http-error.utils";
 import { EmptyStateComponent } from "../../shared/empty-state.component";
 import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { EtudiantService } from "./etudiant.service";
@@ -34,9 +35,14 @@ export class MonInsertionComponent {
         this.insertion.set(data);
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.error.set(
-          "Aucune insertion enregistrée pour votre dossier pour le moment.",
+          extractHttpErrorMessage(err, {
+            notFound:
+              "Aucune insertion enregistrée pour votre dossier pour le moment.",
+            forbidden: "Vous n'avez pas accès à cette information.",
+            default: "Impossible de charger votre insertion pour le moment.",
+          }),
         );
         this.loading.set(false);
       },

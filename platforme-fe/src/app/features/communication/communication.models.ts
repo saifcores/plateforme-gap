@@ -8,7 +8,7 @@ export interface CompteRendu {
   contenu?: string;
   documentUrl?: string;
   auteur?: string;
-  rolesAutorises: RoleCode[];
+  rolesAutorises?: RoleCode[];
 }
 
 export interface CompteRenduRequest {
@@ -26,7 +26,26 @@ export const TYPES_COMPTE_RENDU = [
   "SEMINAIRE",
   "WEBINAIRE",
   "CONSEIL_UNIVERSITE",
-];
+] as const;
+
+export const LABELS_TYPE_COMPTE_RENDU: Record<string, string> = {
+  REUNION: "Réunion",
+  RENCONTRE: "Rencontre",
+  SEMINAIRE: "Séminaire",
+  WEBINAIRE: "Webinaire",
+  CONSEIL_UNIVERSITE: "Conseil université",
+};
+
+export const LABELS_ROLE: Record<RoleCode, string> = {
+  ADMIN: "Administrateur",
+  ADMINISTRATIF: "Administratif",
+  ENSEIGNANT: "Enseignant",
+  ENSEIGNANT_ASSOCIE: "Enseignant associé",
+  RESPONSABLE_FORMATION: "Responsable formation",
+  TUTEUR: "Tuteur",
+  APPUI_INSERTION: "Appui insertion",
+  ETUDIANT: "Étudiant",
+};
 
 export const ROLES: RoleCode[] = [
   "ADMIN",

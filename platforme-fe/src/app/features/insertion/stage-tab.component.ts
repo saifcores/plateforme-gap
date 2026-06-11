@@ -19,7 +19,14 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { ClientListController } from "../../core/utils/client-list.util";
 import { ConfirmDialogService } from "../../shared/confirm-dialog.service";
 import { SearchFieldComponent } from "../../shared/search-field.component";
+import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { InsertionService } from "./insertion.service";
+import { formatLocalDate } from "../../shared/date.utils";
+import {
+  extractApiErrorMessage,
+  finishListLoad,
+  showApiErrorSnack,
+} from "../../core/http/http-error.utils";
 import { Partenaire, Stage } from "./insertion.models";
 import { EtudiantService } from "../etudiants/etudiant.service";
 import { Etudiant } from "../etudiants/etudiant.models";
@@ -43,6 +50,7 @@ import { Etudiant } from "../etudiants/etudiant.models";
     MatProgressBarModule,
     MatTooltipModule,
     SearchFieldComponent,
+    PageFeedbackComponent,
   ],
   template: `
     <mat-expansion-panel class="add-panel gap-form-panel">
@@ -106,9 +114,7 @@ import { Etudiant } from "../etudiants/etudiant.models";
       </form>
     </mat-expansion-panel>
 
-    @if (loading()) {
-      <mat-progress-bar mode="indeterminate" class="tab-loading" />
-    }
+    <app-page-feedback [loading]="loading()" [error]="loadError()" />
 
     <app-search-field
       placeholder="Étudiant, sujet, partenaire…"
@@ -161,7 +167,11 @@ import { Etudiant } from "../etudiants/etudiant.models";
             <button mat-icon-button (click)="$event.stopPropagation(); edit(s)">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button color="warn" (click)="$event.stopPropagation(); remove(s)">
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="$event.stopPropagation(); remove(s)"
+            >
               <mat-icon>delete</mat-icon>
             </button>
           </td>
@@ -209,11 +219,11 @@ export class StageTabComponent {
     "actions",
   ];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly items = signal<Stage[]>([]);
   readonly list = new ClientListController(
     this.items,
-    (s) =>
-      `${s.etudiantNom ?? ""} ${s.partenaireNom ?? ""} ${s.sujet ?? ""}`,
+    (s) => `${s.etudiantNom ?? ""} ${s.partenaireNom ?? ""} ${s.sujet ?? ""}`,
     {
       etudiant: (s) => s.etudiantNom,
       partenaire: (s) => s.partenaireNom,
@@ -238,19 +248,42 @@ export class StageTabComponent {
   });
 
   constructor() {
-    this.etudiantService.options().subscribe((d) => this.etudiants.set(d));
-    this.service.listPartenaires().subscribe((d) => this.partenaires.set(d));
+    this.etudiantService.options().subscribe({
+      next: (d) => this.etudiants.set(d),
+      error: (err) =>
+        showApiErrorSnack(
+          this.snack,
+          err,
+          "Impossible de charger la liste des étudiants.",
+        ),
+    });
+    this.service.listPartenaires().subscribe({
+      next: (d) => this.partenaires.set(d),
+      error: (err) =>
+        showApiErrorSnack(
+          this.snack,
+          err,
+          "Impossible de charger la liste des partenaires.",
+        ),
+    });
     this.load();
   }
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.listStages().subscribe({
       next: (d) => {
         this.items.set(d);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) =>
+        finishListLoad(
+          err,
+          this.loading,
+          this.loadError,
+          "Impossible de charger les stages.",
+        ),
     });
   }
 
@@ -286,12 +319,8 @@ export class StageTabComponent {
       etudiantId: raw.etudiantId!,
       partenaireId: raw.partenaireId ?? undefined,
       sujet: raw.sujet || undefined,
-      dateDebut: raw.dateDebut
-        ? new Date(raw.dateDebut).toISOString().substring(0, 10)
-        : undefined,
-      dateFin: raw.dateFin
-        ? new Date(raw.dateFin).toISOString().substring(0, 10)
-        : undefined,
+      dateDebut: raw.dateDebut ? formatLocalDate(raw.dateDebut)! : undefined,
+      dateFin: raw.dateFin ? formatLocalDate(raw.dateFin)! : undefined,
       note: raw.note ?? undefined,
       bilan: raw.bilan || undefined,
     };
@@ -304,7 +333,8 @@ export class StageTabComponent {
         this.reset();
         this.load();
       },
-      error: () => this.snack.open("Erreur", "OK", { duration: 4000 }),
+      error: (err) =>
+        this.snack.open(extractApiErrorMessage(err, "Erreur"), "OK", { duration: 4000 }),
     });
   }
 
@@ -313,7 +343,14 @@ export class StageTabComponent {
       if (!ok) {
         return;
       }
-      this.service.deleteStage(s.id).subscribe(() => this.load());
+      this.service.deleteStage(s.id).subscribe({
+        next: () => {
+          this.snack.open("Stage supprimé", "OK", { duration: 3000 });
+          this.load();
+        },
+        error: (err) =>
+          showApiErrorSnack(this.snack, err, "Suppression impossible"),
+      });
     });
   }
 }

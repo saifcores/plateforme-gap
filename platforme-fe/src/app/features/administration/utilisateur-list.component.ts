@@ -18,6 +18,10 @@ import { RoleCode, Utilisateur } from "../../core/auth/auth.models";
 import { buildSortParam, onSortChange } from "../../core/utils/sort.util";
 import { RoleService } from "../../core/utilisateurs/role.service";
 import { UtilisateurService } from "../../core/utilisateurs/utilisateur.service";
+import {
+  extractApiErrorMessage,
+  finishListLoad,
+} from "../../core/http/http-error.utils";
 import { EmptyStateComponent } from "../../shared/empty-state.component";
 import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { SearchFieldComponent } from "../../shared/search-field.component";
@@ -71,6 +75,7 @@ export class UtilisateurListComponent {
   readonly allRoles = signal<RoleCode[]>(FALLBACK_ROLES);
   readonly columns = ["nom", "email", "roles", "statut", "actions"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly items = signal<Utilisateur[]>([]);
   readonly filter = signal("");
   readonly editId = signal<number | null>(null);
@@ -100,6 +105,7 @@ export class UtilisateurListComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service
       .search({
         page: this.pageIndex(),
@@ -118,10 +124,13 @@ export class UtilisateurListComponent {
           this.totalElements.set(page.totalElements);
           this.loading.set(false);
         },
-        error: () => {
-          this.loading.set(false);
-          this.snack.open("Accès refusé ou erreur", "OK", { duration: 4000 });
-        },
+        error: (err) =>
+          finishListLoad(
+            err,
+            this.loading,
+            this.loadError,
+            "Impossible de charger les utilisateurs.",
+          ),
       });
   }
 
@@ -202,7 +211,7 @@ export class UtilisateurListComponent {
             this.load();
           },
           error: (err) =>
-            this.snack.open(err?.error?.message ?? "Erreur", "OK", {
+            this.snack.open(extractApiErrorMessage(err, "Erreur"), "OK", {
               duration: 4000,
             }),
         });
@@ -232,7 +241,7 @@ export class UtilisateurListComponent {
           this.load();
         },
         error: (err) =>
-          this.snack.open(err?.error?.message ?? "Erreur", "OK", {
+          this.snack.open(extractApiErrorMessage(err, "Erreur"), "OK", {
             duration: 4000,
           }),
       });

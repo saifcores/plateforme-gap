@@ -93,6 +93,7 @@
       [message]="error() || view()?.emptyMessage || 'Élément introuvable.'"
       [actionLabel]="view()?.backLabel || 'Retour'"
       [actionLink]="view()?.backLink || '/dashboard'"
+      [actionQueryParams]="backQueryParams()"
     />
   </div>
 }

@@ -133,7 +133,7 @@ export function buildEntityDetailView(
           { label: "Email", value: u.email },
           { label: "Téléphone", value: fmt(u.telephone) },
           { label: "Statut", value: u.actif ? "Actif" : "Inactif" },
-          { label: "Rôles", value: u.roles.join(", ") },
+          { label: "Rôles", value: u.roles?.join(", ") ?? "—" },
         ],
       };
     }
@@ -356,7 +356,7 @@ export function buildEntityDetailView(
         accentClass: "page-accent-insertion",
         icon: "trending_up",
         backLink: "/insertion",
-        backTab: "sortants",
+        backTab: "insertions",
         backLabel: "Retour",
         emptyIcon: "trending_up",
         emptyMessage: "Insertion introuvable.",
@@ -376,4 +376,38 @@ export function buildEntityDetailView(
       };
     }
   }
+}
+
+function emptyEntityStub(type: EntityDetailType): unknown {
+  switch (type) {
+    case "utilisateur":
+      return { email: "", prenom: "", nom: "", actif: false, roles: [] };
+    case "formateur":
+      return { nom: "", prenom: "" };
+    case "circulaire":
+      return { objet: "", dateCirculaire: "" };
+    case "courrier":
+      return { objet: "", type: "", dateCourrier: "" };
+    case "note-service":
+      return { objet: "", type: "", dateNote: "" };
+    case "note-administrative":
+      return { objet: "", dateNote: "" };
+    case "personnel":
+      return { prenom: "", nom: "", type: "" };
+    case "budget":
+      return { annee: 0, type: "", lignes: [] };
+    case "stage":
+      return { sujet: "" };
+    case "partenaire":
+      return { nom: "" };
+    case "contact":
+      return { objet: "" };
+    case "insertion":
+      return { type: "" };
+  }
+}
+
+/** Navigation shell used when the entity fails to load (404, 403, etc.). */
+export function entityDetailShell(type: EntityDetailType): EntityDetailView {
+  return buildEntityDetailView(type, emptyEntityStub(type));
 }

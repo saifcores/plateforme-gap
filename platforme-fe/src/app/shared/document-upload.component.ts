@@ -4,6 +4,7 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 
 import { DocumentService } from "../core/documents/document.service";
+import { extractApiErrorMessage } from "../core/http/http-error.utils";
 
 @Component({
   selector: "app-document-upload",
@@ -120,9 +121,9 @@ export class DocumentUploadComponent {
         this.uploading.set(false);
         this.valueChange.emit(this.documents.resolveUrl(doc.url));
       },
-      error: () => {
+      error: (err) => {
         this.uploading.set(false);
-        this.error.set("Échec de l'envoi du fichier.");
+        this.error.set(extractApiErrorMessage(err, "Échec de l'envoi du fichier."));
       },
     });
   }

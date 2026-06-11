@@ -1,3 +1,4 @@
+import { extractHttpErrorMessage } from "../../core/http/http-error.utils";
 import { Component, inject, signal } from "@angular/core";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { MatCardModule } from "@angular/material/card";
@@ -44,8 +45,14 @@ export class EtudiantDetailComponent {
         this.etudiant.set(e);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set("Étudiant introuvable ou accès refusé.");
+      error: (err) => {
+        this.error.set(
+          extractHttpErrorMessage(err, {
+            notFound: "Étudiant introuvable ou accès refusé.",
+            forbidden: "Vous n'avez pas accès à cet étudiant.",
+            default: "Impossible de charger l'étudiant.",
+          }),
+        );
         this.loading.set(false);
       },
     });

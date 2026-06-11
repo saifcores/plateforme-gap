@@ -29,6 +29,12 @@ import {
 } from "./formation.models";
 import { AuthService } from "../../core/auth/auth.service";
 import { ConfirmDialogService } from "../../shared/confirm-dialog.service";
+import { formatLocalDate, formatLocalDateTime } from "../../shared/date.utils";
+import {
+  extractApiErrorMessage,
+  extractHttpErrorMessage,
+  showApiErrorSnack,
+} from "../../core/http/http-error.utils";
 import { EmptyStateComponent } from "../../shared/empty-state.component";
 import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 
@@ -141,14 +147,26 @@ export class FormationDetailComponent {
         this.formation.set(f);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set("Formation introuvable ou accès refusé.");
+      error: (err) => {
+        this.error.set(
+          extractHttpErrorMessage(err, {
+            notFound: "Formation introuvable ou accès refusé.",
+            forbidden: "Vous n'avez pas accès à cette formation.",
+            default: "Impossible de charger la formation.",
+          }),
+        );
         this.loading.set(false);
       },
     });
-    this.service
-      .formateursOptions()
-      .subscribe((list) => this.formateurs.set(list));
+    this.service.formateursOptions().subscribe({
+      next: (list) => this.formateurs.set(list),
+      error: (err) =>
+        showApiErrorSnack(
+          this.snack,
+          err,
+          "Impossible de charger la liste des formateurs",
+        ),
+    });
     this.loadSeances();
     this.loadReunions();
     this.loadFormateursAffectes();
@@ -156,27 +174,31 @@ export class FormationDetailComponent {
   }
 
   loadSeances(): void {
-    this.service
-      .seances(this.formationId)
-      .subscribe((s) => this.seances.set(s));
+    this.service.seances(this.formationId).subscribe({
+      next: (s) => this.seances.set(s),
+      error: () => this.seances.set([]),
+    });
   }
 
   loadFormateursAffectes(): void {
-    this.service
-      .formateursAffectes(this.formationId)
-      .subscribe((list) => this.formateursAffectes.set(list));
+    this.service.formateursAffectes(this.formationId).subscribe({
+      next: (list) => this.formateursAffectes.set(list),
+      error: () => this.formateursAffectes.set([]),
+    });
   }
 
   loadStatsGenre(): void {
-    this.service
-      .statsGenre(this.formationId)
-      .subscribe((stats) => this.statsGenre.set(stats));
+    this.service.statsGenre(this.formationId).subscribe({
+      next: (stats) => this.statsGenre.set(stats),
+      error: () => this.statsGenre.set([]),
+    });
   }
 
   loadReunions(): void {
-    this.service
-      .reunions(this.formationId)
-      .subscribe((list) => this.reunions.set(list));
+    this.service.reunions(this.formationId).subscribe({
+      next: (list) => this.reunions.set(list),
+      error: () => this.reunions.set([]),
+    });
   }
 
   sauvegarderSeance(): void {
@@ -189,7 +211,7 @@ export class FormationDetailComponent {
     const payload = {
       matiere: raw.matiere!,
       type: raw.type!,
-      dateSeance: new Date(raw.dateSeance!).toISOString().substring(0, 10),
+      dateSeance: formatLocalDate(raw.dateSeance!)!,
       heureDebut: this.normalizeTime(raw.heureDebut!),
       heureFin: this.normalizeTime(raw.heureFin!),
       salle: raw.salle || undefined,
@@ -212,7 +234,7 @@ export class FormationDetailComponent {
       },
       error: (err) => {
         this.addingSeance.set(false);
-        this.snack.open(err?.error?.message ?? "Échec", "OK", {
+        this.snack.open(extractApiErrorMessage(err, "Échec"), "OK", {
           duration: 4000,
         });
       },
@@ -251,8 +273,8 @@ export class FormationDetailComponent {
           this.snack.open("Séance supprimée", "OK", { duration: 3000 });
           this.loadSeances();
         },
-        error: () =>
-          this.snack.open("Suppression impossible", "OK", { duration: 4000 }),
+        error: (err) =>
+          showApiErrorSnack(this.snack, err, "Suppression impossible"),
       });
     });
   }
@@ -275,7 +297,7 @@ export class FormationDetailComponent {
           this.loadFormateursAffectes();
         },
         error: (err) =>
-          this.snack.open(err?.error?.message ?? "Échec", "OK", {
+          this.snack.open(extractApiErrorMessage(err, "Échec"), "OK", {
             duration: 4000,
           }),
       });
@@ -312,7 +334,7 @@ export class FormationDetailComponent {
       },
       error: (err) => {
         this.savingReunion.set(false);
-        this.snack.open(err?.error?.message ?? "Échec", "OK", {
+        this.snack.open(extractApiErrorMessage(err, "Échec"), "OK", {
           duration: 4000,
         });
       },
@@ -350,8 +372,8 @@ export class FormationDetailComponent {
           this.snack.open("Réunion supprimée", "OK", { duration: 3000 });
           this.loadReunions();
         },
-        error: () =>
-          this.snack.open("Suppression impossible", "OK", { duration: 4000 }),
+        error: (err) =>
+          showApiErrorSnack(this.snack, err, "Suppression impossible"),
       });
     });
   }
@@ -367,8 +389,8 @@ export class FormationDetailComponent {
           .retirerFormateur(this.formationId, link.formateurId)
           .subscribe({
             next: () => this.loadFormateursAffectes(),
-            error: () =>
-              this.snack.open("Retrait impossible", "OK", { duration: 4000 }),
+            error: (err) =>
+              showApiErrorSnack(this.snack, err, "Retrait impossible"),
           });
       });
   }
@@ -378,9 +400,6 @@ export class FormationDetailComponent {
   }
 
   private toIsoDateTime(date: Date, time: string): string {
-    const [h, m] = time.split(":");
-    const dt = new Date(date);
-    dt.setHours(Number(h), Number(m), 0, 0);
-    return dt.toISOString();
+    return formatLocalDateTime(date, this.normalizeTime(time));
   }
 }

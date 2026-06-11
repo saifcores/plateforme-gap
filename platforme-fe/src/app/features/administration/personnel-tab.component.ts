@@ -19,7 +19,10 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { ClientListController } from "../../core/utils/client-list.util";
 import { ConfirmDialogService } from "../../shared/confirm-dialog.service";
 import { SearchFieldComponent } from "../../shared/search-field.component";
+import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { AdministrationService } from "./administration.service";
+import { formatLocalDate } from "../../shared/date.utils";
+import { finishListLoad, showApiErrorSnack } from "../../core/http/http-error.utils";
 import { Personnel, TYPES_PERSONNEL } from "./administration.models";
 
 @Component({
@@ -41,6 +44,7 @@ import { Personnel, TYPES_PERSONNEL } from "./administration.models";
     MatProgressBarModule,
     MatTooltipModule,
     SearchFieldComponent,
+    PageFeedbackComponent,
   ],
   template: `
     <mat-expansion-panel class="add-panel gap-form-panel">
@@ -97,9 +101,7 @@ import { Personnel, TYPES_PERSONNEL } from "./administration.models";
       </form>
     </mat-expansion-panel>
 
-    @if (loading()) {
-      <mat-progress-bar mode="indeterminate" class="tab-loading" />
-    }
+    <app-page-feedback [loading]="loading()" [error]="loadError()" />
 
     <app-search-field
       placeholder="Nom, prénom, fonction…"
@@ -146,7 +148,11 @@ import { Personnel, TYPES_PERSONNEL } from "./administration.models";
             <button mat-icon-button (click)="$event.stopPropagation(); edit(p)">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button color="warn" (click)="$event.stopPropagation(); remove(p)">
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="$event.stopPropagation(); remove(p)"
+            >
               <mat-icon>delete</mat-icon>
             </button>
           </td>
@@ -187,6 +193,7 @@ export class PersonnelTabComponent {
   readonly types = TYPES_PERSONNEL;
   readonly columns = ["nom", "type", "matricule", "fonction", "actions"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly items = signal<Personnel[]>([]);
   readonly list = new ClientListController(
     this.items,
@@ -219,12 +226,19 @@ export class PersonnelTabComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.listPersonnels().subscribe({
       next: (d) => {
         this.items.set(d);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) =>
+        finishListLoad(
+          err,
+          this.loading,
+          this.loadError,
+          "Impossible de charger le personnel.",
+        ),
     });
   }
 
@@ -259,7 +273,7 @@ export class PersonnelTabComponent {
     const payload = {
       ...raw,
       dateEmbauche: raw.dateEmbauche
-        ? new Date(raw.dateEmbauche).toISOString().substring(0, 10)
+        ? formatLocalDate(raw.dateEmbauche)!
         : undefined,
     } as Partial<Personnel>;
     const req$ = this.editId()
@@ -272,9 +286,7 @@ export class PersonnelTabComponent {
         this.load();
       },
       error: (err) =>
-        this.snack.open(err?.error?.message ?? "Erreur", "OK", {
-          duration: 4000,
-        }),
+        showApiErrorSnack(this.snack, err, "Enregistrement impossible"),
     });
   }
 
@@ -283,7 +295,14 @@ export class PersonnelTabComponent {
       if (!ok) {
         return;
       }
-      this.service.deletePersonnel(p.id).subscribe(() => this.load());
+      this.service.deletePersonnel(p.id).subscribe({
+        next: () => {
+          this.snack.open("Dossier supprimé", "OK", { duration: 3000 });
+          this.load();
+        },
+        error: (err) =>
+          showApiErrorSnack(this.snack, err, "Suppression impossible"),
+      });
     });
   }
 }

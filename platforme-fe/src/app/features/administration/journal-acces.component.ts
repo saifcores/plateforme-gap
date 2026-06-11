@@ -12,6 +12,12 @@ import {
 } from "../../core/documents/journal-acces.service";
 import { onClientSortChange, sortItems } from "../../core/utils/sort.util";
 import { EmptyStateComponent } from "../../shared/empty-state.component";
+import {
+  extractApiErrorMessage,
+  finishListLoad,
+  showBlobErrorSnack,
+  triggerFileDownload,
+} from "../../core/http/http-error.utils";
 import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { SearchFieldComponent } from "../../shared/search-field.component";
 
@@ -44,6 +50,7 @@ export class JournalAccesComponent {
 
   readonly columns = ["date", "document", "utilisateur", "action"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly exporting = signal(false);
   readonly items = signal<JournalEntry[]>([]);
   readonly filter = signal("");
@@ -87,12 +94,19 @@ export class JournalAccesComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.list().subscribe({
       next: (data) => {
         this.items.set(data);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) =>
+        finishListLoad(
+          err,
+          this.loading,
+          this.loadError,
+          "Impossible de charger le journal.",
+        ),
     });
   }
 
@@ -119,17 +133,12 @@ export class JournalAccesComponent {
     this.exporting.set(true);
     this.service.exportExcel().subscribe({
       next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "journal-acces-documents.xlsx";
-        a.click();
-        URL.revokeObjectURL(url);
+        triggerFileDownload(blob, "journal-acces-documents.xlsx");
         this.exporting.set(false);
       },
-      error: () => {
+      error: async (err) => {
         this.exporting.set(false);
-        this.snack.open("Export impossible", "OK", { duration: 4000 });
+        await showBlobErrorSnack(this.snack, err, "Export impossible");
       },
     });
   }

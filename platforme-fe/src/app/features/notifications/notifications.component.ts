@@ -12,6 +12,11 @@ import {
 } from "../../core/notifications/notification.service";
 import { EmptyStateComponent } from "../../shared/empty-state.component";
 import { PageFeedbackComponent } from "../../shared/page-feedback.component";
+import {
+  extractApiErrorMessage,
+  showApiErrorSnack,
+} from "../../core/http/http-error.utils";
+import { MatSnackBar } from "@angular/material/snack-bar";
 
 @Component({
   selector: "app-notifications",
@@ -31,6 +36,7 @@ import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 export class NotificationsComponent {
   private readonly service = inject(NotificationService);
   private readonly router = inject(Router);
+  private readonly snack = inject(MatSnackBar);
 
   readonly notifications = signal<Notification[]>([]);
   readonly loading = signal(true);
@@ -48,8 +54,10 @@ export class NotificationsComponent {
         this.notifications.set(data);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set("Impossible de charger les notifications.");
+      error: (err) => {
+        this.error.set(
+          extractApiErrorMessage(err, "Impossible de charger les notifications."),
+        );
         this.loading.set(false);
       },
     });
@@ -71,6 +79,10 @@ export class NotificationsComponent {
   }
 
   toutLire(): void {
-    this.service.markAllRead().subscribe(() => this.load());
+    this.service.markAllRead().subscribe({
+      next: () => this.load(),
+      error: (err) =>
+        showApiErrorSnack(this.snack, err, "Impossible de marquer comme lues"),
+    });
   }
 }

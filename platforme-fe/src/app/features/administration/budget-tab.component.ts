@@ -23,7 +23,14 @@ import { ClientListController } from "../../core/utils/client-list.util";
 import { DocumentUploadComponent } from "../../shared/document-upload.component";
 import { ConfirmDialogService } from "../../shared/confirm-dialog.service";
 import { SearchFieldComponent } from "../../shared/search-field.component";
+import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { AdministrationService } from "./administration.service";
+import {
+  finishListLoad,
+  showApiErrorSnack,
+  showBlobErrorSnack,
+  triggerFileDownload,
+} from "../../core/http/http-error.utils";
 import { Budget, TYPES_BUDGET } from "./administration.models";
 
 @Component({
@@ -44,6 +51,7 @@ import { Budget, TYPES_BUDGET } from "./administration.models";
     MatProgressBarModule,
     DocumentUploadComponent,
     SearchFieldComponent,
+    PageFeedbackComponent,
   ],
   template: `
     <mat-expansion-panel class="add-panel gap-form-panel">
@@ -132,9 +140,7 @@ import { Budget, TYPES_BUDGET } from "./administration.models";
       </form>
     </mat-expansion-panel>
 
-    @if (loading()) {
-      <mat-progress-bar mode="indeterminate" class="tab-loading" />
-    }
+    <app-page-feedback [loading]="loading()" [error]="loadError()" />
 
     <app-search-field
       placeholder="Année, intitulé, libellé…"
@@ -183,6 +189,7 @@ import { Budget, TYPES_BUDGET } from "./administration.models";
             <button
               mat-icon-button
               matTooltip="Export PDF"
+              [disabled]="exporting()"
               (click)="$event.stopPropagation(); exportBudget(b.id, 'pdf')"
             >
               <mat-icon>picture_as_pdf</mat-icon>
@@ -190,6 +197,7 @@ import { Budget, TYPES_BUDGET } from "./administration.models";
             <button
               mat-icon-button
               matTooltip="Export Excel"
+              [disabled]="exporting()"
               (click)="$event.stopPropagation(); exportBudget(b.id, 'excel')"
             >
               <mat-icon>table_chart</mat-icon>
@@ -242,6 +250,8 @@ export class BudgetTabComponent {
   readonly types = TYPES_BUDGET;
   readonly columns = ["annee", "type", "prevu", "realise", "actions"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
+  readonly exporting = signal(false);
   readonly items = signal<Budget[]>([]);
   readonly list = new ClientListController(
     this.items,
@@ -287,12 +297,19 @@ export class BudgetTabComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.listBudgets().subscribe({
       next: (d) => {
         this.items.set(d);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) =>
+        finishListLoad(
+          err,
+          this.loading,
+          this.loadError,
+          "Impossible de charger les budgets.",
+        ),
     });
   }
 
@@ -309,24 +326,28 @@ export class BudgetTabComponent {
   }
 
   edit(b: Budget): void {
-    this.service.getBudget(b.id).subscribe((full) => {
-      this.editId.set(full.id);
-      this.lignes.clear();
-      (full.lignes ?? []).forEach((l) =>
-        this.lignes.push(
-          this.newLigne(
-            l.intitule,
-            l.montantPrevu ?? null,
-            l.montantRealise ?? null,
+    this.service.getBudget(b.id).subscribe({
+      next: (full) => {
+        this.editId.set(full.id);
+        this.lignes.clear();
+        (full.lignes ?? []).forEach((l) =>
+          this.lignes.push(
+            this.newLigne(
+              l.intitule,
+              l.montantPrevu ?? null,
+              l.montantRealise ?? null,
+            ),
           ),
-        ),
-      );
-      this.form.patchValue({
-        annee: full.annee,
-        type: full.type,
-        noteOrientation: full.noteOrientation ?? "",
-        documentUrl: full.documentUrl ?? "",
-      });
+        );
+        this.form.patchValue({
+          annee: full.annee,
+          type: full.type,
+          noteOrientation: full.noteOrientation ?? "",
+          documentUrl: full.documentUrl ?? "",
+        });
+      },
+      error: (err) =>
+        showApiErrorSnack(this.snack, err, "Impossible de charger le budget"),
     });
   }
 
@@ -351,7 +372,8 @@ export class BudgetTabComponent {
         this.reset();
         this.load();
       },
-      error: () => this.snack.open("Erreur", "OK", { duration: 4000 }),
+      error: (err) =>
+        showApiErrorSnack(this.snack, err, "Enregistrement impossible"),
     });
   }
 
@@ -360,26 +382,38 @@ export class BudgetTabComponent {
       if (!ok) {
         return;
       }
-      this.service.deleteBudget(b.id).subscribe(() => this.load());
+      this.service.deleteBudget(b.id).subscribe({
+        next: () => {
+          this.snack.open("Budget supprimé", "OK", { duration: 3000 });
+          this.load();
+        },
+        error: (err) =>
+          showApiErrorSnack(this.snack, err, "Suppression impossible"),
+      });
     });
   }
 
   exportBudget(id: number, format: "pdf" | "excel"): void {
+    if (this.exporting()) {
+      return;
+    }
+    this.exporting.set(true);
     const req$ =
       format === "pdf"
         ? this.service.exportBudgetPdf(id)
         : this.service.exportBudgetExcel(id);
     req$.subscribe({
       next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `budget.${format === "pdf" ? "pdf" : "xlsx"}`;
-        a.click();
-        URL.revokeObjectURL(url);
+        triggerFileDownload(
+          blob,
+          `budget-${id}.${format === "pdf" ? "pdf" : "xlsx"}`,
+        );
+        this.exporting.set(false);
       },
-      error: () =>
-        this.snack.open("Export impossible", "OK", { duration: 4000 }),
+      error: async (err) => {
+        this.exporting.set(false);
+        await showBlobErrorSnack(this.snack, err, "Export impossible");
+      },
     });
   }
 }

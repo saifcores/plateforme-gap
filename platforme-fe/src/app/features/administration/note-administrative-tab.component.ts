@@ -19,7 +19,14 @@ import { ClientListController } from "../../core/utils/client-list.util";
 import { DocumentUploadComponent } from "../../shared/document-upload.component";
 import { ConfirmDialogService } from "../../shared/confirm-dialog.service";
 import { SearchFieldComponent } from "../../shared/search-field.component";
+import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { AdministrationService } from "./administration.service";
+import { formatLocalDate } from "../../shared/date.utils";
+import {
+  extractApiErrorMessage,
+  finishListLoad,
+  showApiErrorSnack,
+} from "../../core/http/http-error.utils";
 import { NoteAdministrative } from "./administration.models";
 
 @Component({
@@ -41,6 +48,7 @@ import { NoteAdministrative } from "./administration.models";
     MatTooltipModule,
     DocumentUploadComponent,
     SearchFieldComponent,
+    PageFeedbackComponent,
   ],
   template: `
     <mat-expansion-panel class="add-panel gap-form-panel">
@@ -83,12 +91,10 @@ import { NoteAdministrative } from "./administration.models";
       </form>
     </mat-expansion-panel>
 
-    @if (loading()) {
-      <mat-progress-bar mode="indeterminate" class="tab-loading" />
-    }
+    <app-page-feedback [loading]="loading()" [error]="loadError()" />
 
     <app-search-field
-      placeholder="Objet, référence…"
+      placeholder="Objet, destinataire…"
       [value]="list.filter()"
       [resultCount]="list.filter() ? list.total() : null"
       (search)="list.setFilter($event)"
@@ -124,7 +130,11 @@ import { NoteAdministrative } from "./administration.models";
             <button mat-icon-button (click)="$event.stopPropagation(); edit(n)">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button color="warn" (click)="$event.stopPropagation(); remove(n)">
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="$event.stopPropagation(); remove(n)"
+            >
               <mat-icon>delete</mat-icon>
             </button>
           </td>
@@ -164,6 +174,7 @@ export class NoteAdministrativeTabComponent {
 
   readonly columns = ["objet", "date", "actions"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly items = signal<NoteAdministrative[]>([]);
   readonly list = new ClientListController(
     this.items,
@@ -190,12 +201,19 @@ export class NoteAdministrativeTabComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.listNotesAdministratives().subscribe({
       next: (d) => {
         this.items.set(d);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) =>
+        finishListLoad(
+          err,
+          this.loading,
+          this.loadError,
+          "Impossible de charger les notes administratives.",
+        ),
     });
   }
 
@@ -226,7 +244,7 @@ export class NoteAdministrativeTabComponent {
     const raw = this.form.getRawValue();
     const payload = {
       ...raw,
-      dateNote: new Date(raw.dateNote!).toISOString().substring(0, 10),
+      dateNote: formatLocalDate(raw.dateNote!)!,
     } as Partial<NoteAdministrative>;
     const req$ = this.editId()
       ? this.service.updateNoteAdministrative(this.editId()!, payload)
@@ -237,7 +255,10 @@ export class NoteAdministrativeTabComponent {
         this.reset();
         this.load();
       },
-      error: () => this.snack.open("Erreur", "OK", { duration: 4000 }),
+      error: (err) =>
+        this.snack.open(extractApiErrorMessage(err, "Erreur"), "OK", {
+          duration: 4000,
+        }),
     });
   }
 
@@ -246,7 +267,14 @@ export class NoteAdministrativeTabComponent {
       if (!ok) {
         return;
       }
-      this.service.deleteNoteAdministrative(n.id).subscribe(() => this.load());
+      this.service.deleteNoteAdministrative(n.id).subscribe({
+        next: () => {
+          this.snack.open("Note supprimée", "OK", { duration: 3000 });
+          this.load();
+        },
+        error: (err) =>
+          showApiErrorSnack(this.snack, err, "Suppression impossible"),
+      });
     });
   }
 }

@@ -1,3 +1,4 @@
+import { extractHttpErrorMessage } from "../../core/http/http-error.utils";
 import { Component, inject, signal } from "@angular/core";
 import { MatCardModule } from "@angular/material/card";
 import { MatIconModule } from "@angular/material/icon";
@@ -26,8 +27,14 @@ export class MonDossierComponent {
         this.etudiant.set(data);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set("Impossible de charger votre dossier étudiant.");
+      error: (err) => {
+        this.error.set(
+          extractHttpErrorMessage(err, {
+            notFound: "Aucun dossier étudiant associé à votre compte.",
+            forbidden: "Vous n'avez pas accès à ce dossier.",
+            default: "Impossible de charger votre dossier étudiant.",
+          }),
+        );
         this.loading.set(false);
       },
     });

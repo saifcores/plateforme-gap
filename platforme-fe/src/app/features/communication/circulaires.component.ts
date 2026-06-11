@@ -9,6 +9,10 @@ import { MatSortModule, Sort } from "@angular/material/sort";
 import { onClientSortChange, sortItems } from "../../core/utils/sort.util";
 import { DocumentLinkComponent } from "../../shared/document-link.component";
 import { EmptyStateComponent } from "../../shared/empty-state.component";
+import {
+  extractApiErrorMessage,
+  finishListLoad,
+} from "../../core/http/http-error.utils";
 import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { SearchFieldComponent } from "../../shared/search-field.component";
 import { AdministrationService } from "../administration/administration.service";
@@ -44,6 +48,7 @@ export class CirculairesComponent {
 
   readonly columns = ["reference", "objet", "date", "document", "actions"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly items = signal<Circulaire[]>([]);
   readonly filter = signal("");
   readonly pageIndex = signal(0);
@@ -86,12 +91,19 @@ export class CirculairesComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.listCirculaires().subscribe({
       next: (data) => {
         this.items.set(data);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) =>
+        finishListLoad(
+          err,
+          this.loading,
+          this.loadError,
+          "Impossible de charger les circulaires.",
+        ),
     });
   }
 

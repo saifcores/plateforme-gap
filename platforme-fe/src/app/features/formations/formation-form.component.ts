@@ -14,12 +14,19 @@ import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 import { MatSnackBar } from "@angular/material/snack-bar";
 
 import { FormationService } from "./formation.service";
+import {
+  extractApiErrorMessage,
+  extractHttpErrorMessage,
+} from "../../core/http/http-error.utils";
+import { PageFeedbackComponent } from "../../shared/page-feedback.component";
+import { formatLocalDate } from "../../shared/date.utils";
 import { TYPES_FINANCEMENT, TYPES_FORMATION } from "./formation.models";
 
 @Component({
   selector: "app-formation-form",
   standalone: true,
   imports: [
+    PageFeedbackComponent,
     RouterLink,
     ReactiveFormsModule,
     MatCardModule,
@@ -46,6 +53,7 @@ export class FormationFormComponent {
   readonly typesFormation = TYPES_FORMATION;
   readonly typesFinancement = TYPES_FINANCEMENT;
   readonly loading = signal(false);
+  readonly loadError = signal<string | null>(null);
   readonly saving = signal(false);
   readonly showValidationError = signal(false);
   readonly editId = signal<number | null>(null);
@@ -74,6 +82,7 @@ export class FormationFormComponent {
 
   private load(id: number): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.get(id).subscribe({
       next: (f) => {
         this.form.patchValue({
@@ -88,9 +97,15 @@ export class FormationFormComponent {
         });
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
+        this.loadError.set(
+          extractHttpErrorMessage(err, {
+            notFound: "Formation introuvable ou accès refusé.",
+            forbidden: "Vous n'avez pas accès à cette formation.",
+            default: "Impossible de charger la formation.",
+          }),
+        );
         this.loading.set(false);
-        this.snack.open("Formation introuvable", "OK", { duration: 4000 });
       },
     });
   }
@@ -108,12 +123,8 @@ export class FormationFormComponent {
       ...raw,
       niveau: raw.niveau || undefined,
       description: raw.description || undefined,
-      dateDebut: raw.dateDebut
-        ? new Date(raw.dateDebut).toISOString().substring(0, 10)
-        : undefined,
-      dateFin: raw.dateFin
-        ? new Date(raw.dateFin).toISOString().substring(0, 10)
-        : undefined,
+      dateDebut: raw.dateDebut ? formatLocalDate(raw.dateDebut)! : undefined,
+      dateFin: raw.dateFin ? formatLocalDate(raw.dateFin)! : undefined,
       typeFinancement: raw.typeFinancement || undefined,
       montantFinancement: raw.montantFinancement ?? undefined,
     };
@@ -131,7 +142,7 @@ export class FormationFormComponent {
       error: (err) => {
         this.saving.set(false);
         this.snack.open(
-          err?.error?.message ?? "Échec de l'enregistrement",
+          extractApiErrorMessage(err, "Échec de l'enregistrement"),
           "OK",
           {
             duration: 4000,

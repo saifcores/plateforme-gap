@@ -1,3 +1,4 @@
+import { extractHttpErrorMessage } from "../../core/http/http-error.utils";
 import { Component, inject, signal } from "@angular/core";
 import { MatIconModule } from "@angular/material/icon";
 import { MatTableModule } from "@angular/material/table";
@@ -34,8 +35,14 @@ export class EmploiDuTempsComponent {
         this.seances.set(data);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set("Impossible de charger votre emploi du temps.");
+      error: (err) => {
+        this.error.set(
+          extractHttpErrorMessage(err, {
+            notFound: "Aucun emploi du temps disponible pour votre formation.",
+            forbidden: "Vous n'avez pas accès à l'emploi du temps.",
+            default: "Impossible de charger votre emploi du temps.",
+          }),
+        );
         this.loading.set(false);
       },
     });

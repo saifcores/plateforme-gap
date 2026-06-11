@@ -19,7 +19,14 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { ClientListController } from "../../core/utils/client-list.util";
 import { ConfirmDialogService } from "../../shared/confirm-dialog.service";
 import { SearchFieldComponent } from "../../shared/search-field.component";
+import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { InsertionService } from "./insertion.service";
+import { formatLocalDate } from "../../shared/date.utils";
+import {
+  extractApiErrorMessage,
+  finishListLoad,
+  showApiErrorSnack,
+} from "../../core/http/http-error.utils";
 import {
   Partenaire,
   STATUTS_PARTENAIRE,
@@ -45,6 +52,7 @@ import {
     MatProgressBarModule,
     MatTooltipModule,
     SearchFieldComponent,
+    PageFeedbackComponent,
   ],
   template: `
     <mat-expansion-panel class="add-panel gap-form-panel">
@@ -113,9 +121,7 @@ import {
       </form>
     </mat-expansion-panel>
 
-    @if (loading()) {
-      <mat-progress-bar mode="indeterminate" class="tab-loading" />
-    }
+    <app-page-feedback [loading]="loading()" [error]="loadError()" />
 
     <app-search-field
       placeholder="Nom, secteur, contact…"
@@ -166,7 +172,11 @@ import {
             <button mat-icon-button (click)="$event.stopPropagation(); edit(p)">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button color="warn" (click)="$event.stopPropagation(); remove(p)">
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="$event.stopPropagation(); remove(p)"
+            >
               <mat-icon>delete</mat-icon>
             </button>
           </td>
@@ -208,6 +218,7 @@ export class PartenaireTabComponent {
   readonly statuts = STATUTS_PARTENAIRE;
   readonly columns = ["nom", "type", "secteur", "contact", "statut", "actions"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly items = signal<Partenaire[]>([]);
   readonly list = new ClientListController(
     this.items,
@@ -243,12 +254,19 @@ export class PartenaireTabComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.listPartenaires().subscribe({
       next: (d) => {
         this.items.set(d);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) =>
+        finishListLoad(
+          err,
+          this.loading,
+          this.loadError,
+          "Impossible de charger les partenaires.",
+        ),
     });
   }
 
@@ -292,7 +310,7 @@ export class PartenaireTabComponent {
       adresse: raw.adresse || undefined,
       statut: raw.statut ?? undefined,
       datePartenariat: raw.datePartenariat
-        ? new Date(raw.datePartenariat).toISOString().substring(0, 10)
+        ? formatLocalDate(raw.datePartenariat)!
         : undefined,
     };
     const req$ = this.editId()
@@ -304,7 +322,8 @@ export class PartenaireTabComponent {
         this.reset();
         this.load();
       },
-      error: () => this.snack.open("Erreur", "OK", { duration: 4000 }),
+      error: (err) =>
+        this.snack.open(extractApiErrorMessage(err, "Erreur"), "OK", { duration: 4000 }),
     });
   }
 
@@ -313,7 +332,14 @@ export class PartenaireTabComponent {
       if (!ok) {
         return;
       }
-      this.service.deletePartenaire(p.id).subscribe(() => this.load());
+      this.service.deletePartenaire(p.id).subscribe({
+        next: () => {
+          this.snack.open("Partenaire supprimé", "OK", { duration: 3000 });
+          this.load();
+        },
+        error: (err) =>
+          showApiErrorSnack(this.snack, err, "Suppression impossible"),
+      });
     });
   }
 }

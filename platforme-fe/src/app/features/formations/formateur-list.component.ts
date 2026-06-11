@@ -19,6 +19,11 @@ import { Formateur, TYPES_FORMATEUR } from "./formation.models";
 import { AuthService } from "../../core/auth/auth.service";
 import { ConfirmDialogService } from "../../shared/confirm-dialog.service";
 import { EmptyStateComponent } from "../../shared/empty-state.component";
+import {
+  extractApiErrorMessage,
+  finishListLoad,
+  showApiErrorSnack,
+} from "../../core/http/http-error.utils";
 import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { SearchFieldComponent } from "../../shared/search-field.component";
 
@@ -61,6 +66,7 @@ export class FormateurListComponent {
   readonly types = TYPES_FORMATEUR;
   readonly columns = ["nom", "email", "type", "specialite", "actions"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly items = signal<Formateur[]>([]);
   readonly filter = signal("");
   readonly editId = signal<number | null>(null);
@@ -91,6 +97,7 @@ export class FormateurListComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service
       .searchFormateurs({
         page: this.pageIndex(),
@@ -109,7 +116,13 @@ export class FormateurListComponent {
           this.totalElements.set(page.totalElements);
           this.loading.set(false);
         },
-        error: () => this.loading.set(false),
+        error: (err) =>
+          finishListLoad(
+            err,
+            this.loading,
+            this.loadError,
+            "Impossible de charger les formateurs.",
+          ),
       });
   }
 
@@ -171,7 +184,10 @@ export class FormateurListComponent {
         this.reset();
         this.load();
       },
-      error: () => this.snack.open("Erreur", "OK", { duration: 4000 }),
+      error: (err) =>
+        this.snack.open(extractApiErrorMessage(err, "Erreur"), "OK", {
+          duration: 4000,
+        }),
     });
   }
 
@@ -183,9 +199,12 @@ export class FormateurListComponent {
           return;
         }
         this.service.deleteFormateur(f.id).subscribe({
-          next: () => this.load(),
-          error: () =>
-            this.snack.open("Suppression impossible", "OK", { duration: 4000 }),
+          next: () => {
+            this.snack.open("Formateur supprimé", "OK", { duration: 3000 });
+            this.load();
+          },
+          error: (err) =>
+            showApiErrorSnack(this.snack, err, "Suppression impossible"),
         });
       });
   }

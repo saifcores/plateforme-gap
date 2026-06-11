@@ -3,6 +3,7 @@ import { RouterLink } from "@angular/router";
 import { MatCardModule } from "@angular/material/card";
 import { MatIconModule } from "@angular/material/icon";
 import { catchError, of } from "rxjs";
+import { extractHttpErrorMessage } from "../../core/http/http-error.utils";
 
 import { AuthService } from "../../core/auth/auth.service";
 import { PageFeedbackComponent } from "../../shared/page-feedback.component";
@@ -223,9 +224,11 @@ export class DashboardComponent implements OnInit {
     this.dashboardService
       .loadKpis()
       .pipe(
-        catchError(() => {
+        catchError((err) => {
           this.kpisError.set(
-            "Impossible de charger les indicateurs en temps réel.",
+            extractHttpErrorMessage(err, {
+              default: "Impossible de charger les indicateurs en temps réel.",
+            }),
           );
           return of([
             {

@@ -21,6 +21,13 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { MatSnackBar } from "@angular/material/snack-bar";
 
 import { EtudiantService } from "./etudiant.service";
+import {
+  extractApiErrorMessage,
+  extractHttpErrorMessage,
+  showApiErrorSnack,
+} from "../../core/http/http-error.utils";
+import { PageFeedbackComponent } from "../../shared/page-feedback.component";
+import { formatLocalDate } from "../../shared/date.utils";
 import { GENRES } from "./etudiant.models";
 import { FormationService } from "../formations/formation.service";
 import { Formation } from "../formations/formation.models";
@@ -29,6 +36,7 @@ import { Formation } from "../formations/formation.models";
   selector: "app-etudiant-form",
   standalone: true,
   imports: [
+    PageFeedbackComponent,
     RouterLink,
     ReactiveFormsModule,
     MatCardModule,
@@ -57,6 +65,7 @@ export class EtudiantFormComponent {
   readonly genres = GENRES;
   readonly formations = signal<Formation[]>([]);
   readonly loading = signal(false);
+  readonly loadError = signal<string | null>(null);
   readonly saving = signal(false);
   readonly showValidationError = signal(false);
   readonly editId = signal<number | null>(null);
@@ -89,7 +98,15 @@ export class EtudiantFormComponent {
   }
 
   constructor() {
-    this.formationService.options().subscribe((f) => this.formations.set(f));
+    this.formationService.options().subscribe({
+      next: (f) => this.formations.set(f),
+      error: (err) =>
+        showApiErrorSnack(
+          this.snack,
+          err,
+          "Impossible de charger la liste des formations",
+        ),
+    });
 
     const idParam = this.route.snapshot.paramMap.get("id");
     if (idParam) {
@@ -100,6 +117,7 @@ export class EtudiantFormComponent {
 
   private loadEtudiant(id: number): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.get(id).subscribe({
       next: (e) => {
         this.form.patchValue({
@@ -127,9 +145,15 @@ export class EtudiantFormComponent {
         );
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
+        this.loadError.set(
+          extractHttpErrorMessage(err, {
+            notFound: "Étudiant introuvable ou accès refusé.",
+            forbidden: "Vous n'avez pas accès à cet étudiant.",
+            default: "Impossible de charger l'étudiant.",
+          }),
+        );
         this.loading.set(false);
-        this.snack.open("Étudiant introuvable", "OK", { duration: 4000 });
       },
     });
   }
@@ -188,7 +212,7 @@ export class EtudiantFormComponent {
     const payload = {
       ...raw,
       dateNaissance: raw.dateNaissance
-        ? new Date(raw.dateNaissance).toISOString().substring(0, 10)
+        ? formatLocalDate(raw.dateNaissance)!
         : null,
       email: raw.email || null,
       telephone: raw.telephone || null,
@@ -209,7 +233,7 @@ export class EtudiantFormComponent {
       },
       error: (err) => {
         this.saving.set(false);
-        const msg = err?.error?.message ?? "Échec de l'enregistrement";
+        const msg = extractApiErrorMessage(err, "Échec de l'enregistrement");
         this.snack.open(msg, "OK", { duration: 4000 });
       },
     });

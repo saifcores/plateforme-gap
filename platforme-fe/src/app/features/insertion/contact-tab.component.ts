@@ -19,7 +19,14 @@ import { MatTooltipModule } from "@angular/material/tooltip";
 import { ClientListController } from "../../core/utils/client-list.util";
 import { ConfirmDialogService } from "../../shared/confirm-dialog.service";
 import { SearchFieldComponent } from "../../shared/search-field.component";
+import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { InsertionService } from "./insertion.service";
+import { formatLocalDate } from "../../shared/date.utils";
+import {
+  extractApiErrorMessage,
+  finishListLoad,
+  showApiErrorSnack,
+} from "../../core/http/http-error.utils";
 import { CANAUX_CONTACT, RegistreContact } from "./insertion.models";
 import { EtudiantService } from "../etudiants/etudiant.service";
 import { Etudiant } from "../etudiants/etudiant.models";
@@ -43,6 +50,7 @@ import { Etudiant } from "../etudiants/etudiant.models";
     MatProgressBarModule,
     MatTooltipModule,
     SearchFieldComponent,
+    PageFeedbackComponent,
   ],
   template: `
     <mat-expansion-panel class="add-panel gap-form-panel">
@@ -95,9 +103,7 @@ import { Etudiant } from "../etudiants/etudiant.models";
       </form>
     </mat-expansion-panel>
 
-    @if (loading()) {
-      <mat-progress-bar mode="indeterminate" class="tab-loading" />
-    }
+    <app-page-feedback [loading]="loading()" [error]="loadError()" />
 
     <app-search-field
       placeholder="Étudiant, objet, canal…"
@@ -144,7 +150,11 @@ import { Etudiant } from "../etudiants/etudiant.models";
             <button mat-icon-button (click)="$event.stopPropagation(); edit(c)">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button color="warn" (click)="$event.stopPropagation(); remove(c)">
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="$event.stopPropagation(); remove(c)"
+            >
               <mat-icon>delete</mat-icon>
             </button>
           </td>
@@ -186,6 +196,7 @@ export class ContactTabComponent {
   readonly canaux = CANAUX_CONTACT;
   readonly columns = ["etudiant", "date", "canal", "objet", "actions"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly items = signal<RegistreContact[]>([]);
   readonly list = new ClientListController(
     this.items,
@@ -212,18 +223,33 @@ export class ContactTabComponent {
   });
 
   constructor() {
-    this.etudiantService.options().subscribe((d) => this.etudiants.set(d));
+    this.etudiantService.options().subscribe({
+      next: (d) => this.etudiants.set(d),
+      error: (err) =>
+        showApiErrorSnack(
+          this.snack,
+          err,
+          "Impossible de charger la liste des étudiants.",
+        ),
+    });
     this.load();
   }
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.listContacts().subscribe({
       next: (d) => {
         this.items.set(d);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) =>
+        finishListLoad(
+          err,
+          this.loading,
+          this.loadError,
+          "Impossible de charger les contacts.",
+        ),
     });
   }
 
@@ -255,7 +281,7 @@ export class ContactTabComponent {
     const raw = this.form.getRawValue();
     const payload: Partial<RegistreContact> = {
       etudiantId: raw.etudiantId!,
-      dateContact: new Date(raw.dateContact!).toISOString().substring(0, 10),
+      dateContact: formatLocalDate(raw.dateContact!)!,
       canal: raw.canal || undefined,
       objet: raw.objet || undefined,
       compteRendu: raw.compteRendu || undefined,
@@ -269,7 +295,10 @@ export class ContactTabComponent {
         this.reset();
         this.load();
       },
-      error: () => this.snack.open("Erreur", "OK", { duration: 4000 }),
+      error: (err) =>
+        this.snack.open(extractApiErrorMessage(err, "Erreur"), "OK", {
+          duration: 4000,
+        }),
     });
   }
 
@@ -278,7 +307,14 @@ export class ContactTabComponent {
       if (!ok) {
         return;
       }
-      this.service.deleteContact(c.id).subscribe(() => this.load());
+      this.service.deleteContact(c.id).subscribe({
+        next: () => {
+          this.snack.open("Contact supprimé", "OK", { duration: 3000 });
+          this.load();
+        },
+        error: (err) =>
+          showApiErrorSnack(this.snack, err, "Suppression impossible"),
+      });
     });
   }
 }

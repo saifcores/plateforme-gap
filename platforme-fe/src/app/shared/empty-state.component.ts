@@ -15,7 +15,11 @@ import { MatIconModule } from "@angular/material/icon";
         <span class="empty-desc">{{ description() }}</span>
       }
       @if (actionLabel() && actionLink()) {
-        <a mat-stroked-button [routerLink]="actionLink()">
+        <a
+          mat-stroked-button
+          [routerLink]="actionLink()"
+          [queryParams]="actionQueryParams()"
+        >
           {{ actionLabel() }}
         </a>
       }
@@ -49,4 +53,7 @@ export class EmptyStateComponent {
   readonly compact = input(false);
   readonly actionLabel = input("");
   readonly actionLink = input("");
+  readonly actionQueryParams = input<Record<string, string> | undefined>(
+    undefined,
+  );
 }

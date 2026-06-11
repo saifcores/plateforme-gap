@@ -19,7 +19,14 @@ import { ClientListController } from "../../core/utils/client-list.util";
 import { DocumentUploadComponent } from "../../shared/document-upload.component";
 import { ConfirmDialogService } from "../../shared/confirm-dialog.service";
 import { SearchFieldComponent } from "../../shared/search-field.component";
+import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { AdministrationService } from "./administration.service";
+import { formatLocalDate } from "../../shared/date.utils";
+import {
+  extractApiErrorMessage,
+  finishListLoad,
+  showApiErrorSnack,
+} from "../../core/http/http-error.utils";
 import { Circulaire } from "./administration.models";
 
 @Component({
@@ -41,6 +48,7 @@ import { Circulaire } from "./administration.models";
     MatTooltipModule,
     DocumentUploadComponent,
     SearchFieldComponent,
+    PageFeedbackComponent,
   ],
   template: `
     <mat-expansion-panel class="add-panel gap-form-panel">
@@ -101,9 +109,7 @@ import { Circulaire } from "./administration.models";
       </form>
     </mat-expansion-panel>
 
-    @if (loading()) {
-      <mat-progress-bar mode="indeterminate" class="tab-loading" />
-    }
+    <app-page-feedback [loading]="loading()" [error]="loadError()" />
 
     <app-search-field
       placeholder="Référence, objet…"
@@ -150,7 +156,11 @@ import { Circulaire } from "./administration.models";
             <button mat-icon-button (click)="$event.stopPropagation(); edit(c)">
               <mat-icon>edit</mat-icon>
             </button>
-            <button mat-icon-button color="warn" (click)="$event.stopPropagation(); remove(c)">
+            <button
+              mat-icon-button
+              color="warn"
+              (click)="$event.stopPropagation(); remove(c)"
+            >
               <mat-icon>delete</mat-icon>
             </button>
           </td>
@@ -190,6 +200,7 @@ export class CirculaireTabComponent {
 
   readonly columns = ["objet", "reference", "niveau", "date", "actions"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly items = signal<Circulaire[]>([]);
   readonly list = new ClientListController(
     this.items,
@@ -221,12 +232,19 @@ export class CirculaireTabComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.listCirculaires().subscribe({
       next: (d) => {
         this.items.set(d);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) =>
+        finishListLoad(
+          err,
+          this.loading,
+          this.loadError,
+          "Impossible de charger les circulaires.",
+        ),
     });
   }
 
@@ -259,9 +277,7 @@ export class CirculaireTabComponent {
     const raw = this.form.getRawValue();
     const payload = {
       ...raw,
-      dateCirculaire: new Date(raw.dateCirculaire!)
-        .toISOString()
-        .substring(0, 10),
+      dateCirculaire: formatLocalDate(raw.dateCirculaire!)!,
     } as Partial<Circulaire>;
     const req$ = this.editId()
       ? this.service.updateCirculaire(this.editId()!, payload)
@@ -272,7 +288,8 @@ export class CirculaireTabComponent {
         this.reset();
         this.load();
       },
-      error: () => this.snack.open("Erreur", "OK", { duration: 4000 }),
+      error: (err) =>
+        this.snack.open(extractApiErrorMessage(err, "Erreur"), "OK", { duration: 4000 }),
     });
   }
 
@@ -281,7 +298,14 @@ export class CirculaireTabComponent {
       if (!ok) {
         return;
       }
-      this.service.deleteCirculaire(c.id).subscribe(() => this.load());
+      this.service.deleteCirculaire(c.id).subscribe({
+        next: () => {
+          this.snack.open("Circulaire supprimée", "OK", { duration: 3000 });
+          this.load();
+        },
+        error: (err) =>
+          showApiErrorSnack(this.snack, err, "Suppression impossible"),
+      });
     });
   }
 }

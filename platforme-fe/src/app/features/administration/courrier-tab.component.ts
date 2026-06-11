@@ -20,7 +20,14 @@ import { ClientListController } from "../../core/utils/client-list.util";
 import { DocumentUploadComponent } from "../../shared/document-upload.component";
 import { ConfirmDialogService } from "../../shared/confirm-dialog.service";
 import { SearchFieldComponent } from "../../shared/search-field.component";
+import { PageFeedbackComponent } from "../../shared/page-feedback.component";
 import { AdministrationService } from "./administration.service";
+import { formatLocalDate } from "../../shared/date.utils";
+import {
+  extractApiErrorMessage,
+  finishListLoad,
+  showApiErrorSnack,
+} from "../../core/http/http-error.utils";
 import {
   Courrier,
   STATUTS_COURRIER,
@@ -47,6 +54,7 @@ import {
     MatTooltipModule,
     DocumentUploadComponent,
     SearchFieldComponent,
+    PageFeedbackComponent,
   ],
   template: `
     <mat-expansion-panel class="add-panel gap-form-panel mb-2">
@@ -121,9 +129,7 @@ import {
       </form>
     </mat-expansion-panel>
 
-    @if (loading()) {
-      <mat-progress-bar mode="indeterminate" class="tab-loading" />
-    }
+    <app-page-feedback [loading]="loading()" [error]="loadError()" />
 
     <app-search-field
       placeholder="Objet, expéditeur, destinataire, référence…"
@@ -223,6 +229,7 @@ export class CourrierTabComponent {
   readonly statuts = STATUTS_COURRIER;
   readonly columns = ["type", "objet", "contact", "date", "statut", "actions"];
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly items = signal<Courrier[]>([]);
   readonly list = new ClientListController(
     this.items,
@@ -256,12 +263,19 @@ export class CourrierTabComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.service.listCourriers().subscribe({
       next: (d) => {
         this.items.set(d);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (err) =>
+        finishListLoad(
+          err,
+          this.loading,
+          this.loadError,
+          "Impossible de charger les courriers.",
+        ),
     });
   }
 
@@ -300,7 +314,7 @@ export class CourrierTabComponent {
     const raw = this.form.getRawValue();
     const payload = {
       ...raw,
-      dateCourrier: new Date(raw.dateCourrier!).toISOString().substring(0, 10),
+      dateCourrier: formatLocalDate(raw.dateCourrier!)!,
     } as Partial<Courrier>;
     const req$ = this.editId()
       ? this.service.updateCourrier(this.editId()!, payload)
@@ -311,7 +325,10 @@ export class CourrierTabComponent {
         this.reset();
         this.load();
       },
-      error: () => this.snack.open("Erreur", "OK", { duration: 4000 }),
+      error: (err) =>
+        this.snack.open(extractApiErrorMessage(err, "Erreur"), "OK", {
+          duration: 4000,
+        }),
     });
   }
 
@@ -320,7 +337,14 @@ export class CourrierTabComponent {
       if (!ok) {
         return;
       }
-      this.service.deleteCourrier(c.id).subscribe(() => this.load());
+      this.service.deleteCourrier(c.id).subscribe({
+        next: () => {
+          this.snack.open("Courrier supprimé", "OK", { duration: 3000 });
+          this.load();
+        },
+        error: (err) =>
+          showApiErrorSnack(this.snack, err, "Suppression impossible"),
+      });
     });
   }
 }

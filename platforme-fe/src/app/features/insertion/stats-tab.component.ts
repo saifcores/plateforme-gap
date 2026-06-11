@@ -7,6 +7,11 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
 import { MatSnackBar } from "@angular/material/snack-bar";
 
 import { InsertionService } from "./insertion.service";
+import {
+  extractApiErrorMessage,
+  showBlobErrorSnack,
+  triggerFileDownload,
+} from "../../core/http/http-error.utils";
 import { InsertionStats } from "./insertion.models";
 
 @Component({
@@ -126,8 +131,13 @@ export class StatsTabComponent {
         this.stats.set(s);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set("Impossible de charger les statistiques.");
+      error: (err) => {
+        this.error.set(
+          extractApiErrorMessage(
+            err,
+            "Impossible de charger les statistiques.",
+          ),
+        );
         this.loading.set(false);
       },
     });
@@ -139,17 +149,15 @@ export class StatsTabComponent {
       format === "pdf" ? this.service.exportPdf() : this.service.exportExcel();
     req$.subscribe({
       next: (blob) => {
+        triggerFileDownload(
+          blob,
+          `stats-insertion.${format === "pdf" ? "pdf" : "xlsx"}`,
+        );
         this.exporting.set(false);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `stats-insertion.${format === "pdf" ? "pdf" : "xlsx"}`;
-        a.click();
-        URL.revokeObjectURL(url);
       },
-      error: () => {
+      error: async (err) => {
         this.exporting.set(false);
-        this.snack.open("Export impossible", "OK", { duration: 4000 });
+        await showBlobErrorSnack(this.snack, err, "Export impossible");
       },
     });
   }

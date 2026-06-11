@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from "@angular/core";
+import { extractHttpErrorMessage } from "../core/http/http-error.utils";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
@@ -14,6 +15,7 @@ import { EmptyStateComponent } from "./empty-state.component";
 import { PageFeedbackComponent } from "./page-feedback.component";
 import {
   buildEntityDetailView,
+  entityDetailShell,
   EntityDetailType,
   loadEntity,
 } from "./entity-detail.registry";
@@ -76,9 +78,26 @@ export class EntityDetailComponent {
         });
         this.loading.set(false);
       },
-      error: () => {
-        this.view.set(buildEntityDetailView(type, {}));
-        this.error.set("Élément introuvable ou accès refusé.");
+      error: (err) => {
+        const shell = entityDetailShell(type);
+        const backLink = this.route.snapshot.data["backLink"] as
+          | string
+          | undefined;
+        const backTab = this.route.snapshot.data["backTab"] as
+          | string
+          | undefined;
+        this.view.set({
+          ...shell,
+          ...(backLink ? { backLink } : {}),
+          ...(backTab ? { backTab } : {}),
+        });
+        this.error.set(
+          extractHttpErrorMessage(err, {
+            notFound: "Élément introuvable ou accès refusé.",
+            forbidden: "Accès refusé.",
+            default: "Élément introuvable ou accès refusé.",
+          }),
+        );
         this.loading.set(false);
       },
     });
